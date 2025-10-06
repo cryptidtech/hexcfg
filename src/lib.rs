@@ -56,6 +56,7 @@
 pub mod adapters;
 pub mod domain;
 pub mod ports;
+pub mod service;
 
 /// Commonly used types and traits.
 ///
@@ -63,6 +64,7 @@ pub mod ports;
 pub mod prelude {
     pub use crate::domain::{ConfigError, ConfigKey, ConfigValue, ConfigurationService, Result};
     pub use crate::ports::{ConfigParser, ConfigSource, ConfigWatcher};
+    pub use crate::service::{ConfigurationServiceBuilder, DefaultConfigService};
 
     // Re-export adapters based on feature flags
     #[cfg(feature = "cli")]
