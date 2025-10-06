@@ -71,6 +71,10 @@ pub mod prelude {
     pub use crate::adapters::CommandLineAdapter;
     #[cfg(feature = "env")]
     pub use crate::adapters::EnvVarAdapter;
+    #[cfg(feature = "etcd")]
+    pub use crate::adapters::EtcdAdapter;
+    #[cfg(feature = "redis_backend")]
+    pub use crate::adapters::{RedisAdapter, RedisStorageMode};
     #[cfg(feature = "yaml")]
     pub use crate::adapters::{YamlFileAdapter, YamlParser};
 }

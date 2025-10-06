@@ -132,7 +132,8 @@ impl DefaultConfigService {
 
     /// Sorts sources by priority (highest first).
     fn sort_sources(&mut self) {
-        self.sources.sort_by_key(|b| std::cmp::Reverse(b.priority()));
+        self.sources
+            .sort_by_key(|b| std::cmp::Reverse(b.priority()));
     }
 
     /// Invalidates the cache.
@@ -352,6 +353,145 @@ impl ConfigurationServiceBuilder {
     pub fn with_yaml_file(self, path: impl AsRef<std::path::Path>) -> Result<Self> {
         use crate::adapters::YamlFileAdapter;
         let adapter = YamlFileAdapter::from_file(path)?;
+        Ok(self.with_source(Box::new(adapter)))
+    }
+
+    /// Adds etcd as a configuration source.
+    ///
+    /// # Arguments
+    ///
+    /// * `endpoints` - List of etcd endpoints (e.g., `vec!["localhost:2379"]`)
+    /// * `prefix` - Optional key prefix for namespacing
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use configuration::service::ConfigurationServiceBuilder;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> configuration::domain::Result<()> {
+    /// let service = ConfigurationServiceBuilder::new()
+    ///     .with_etcd(vec!["localhost:2379"], Some("myapp/")).await?
+    ///     .build()?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[cfg(feature = "etcd")]
+    pub async fn with_etcd<S: AsRef<str>>(
+        self,
+        endpoints: Vec<S>,
+        prefix: Option<&str>,
+    ) -> Result<Self> {
+        use crate::adapters::EtcdAdapter;
+        let adapter = EtcdAdapter::new(endpoints, prefix).await?;
+        Ok(self.with_source(Box::new(adapter)))
+    }
+
+    /// Adds etcd as a configuration source with custom priority.
+    ///
+    /// # Arguments
+    ///
+    /// * `endpoints` - List of etcd endpoints
+    /// * `prefix` - Optional key prefix for namespacing
+    /// * `priority` - Priority for this source (higher values override lower values)
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use configuration::service::ConfigurationServiceBuilder;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> configuration::domain::Result<()> {
+    /// let service = ConfigurationServiceBuilder::new()
+    ///     .with_etcd_priority(vec!["localhost:2379"], Some("myapp/"), 2).await?
+    ///     .build()?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[cfg(feature = "etcd")]
+    pub async fn with_etcd_priority<S: AsRef<str>>(
+        self,
+        endpoints: Vec<S>,
+        prefix: Option<&str>,
+        priority: u8,
+    ) -> Result<Self> {
+        use crate::adapters::EtcdAdapter;
+        let adapter = EtcdAdapter::with_priority(endpoints, prefix, priority).await?;
+        Ok(self.with_source(Box::new(adapter)))
+    }
+
+    /// Adds Redis as a configuration source.
+    ///
+    /// # Arguments
+    ///
+    /// * `url` - Redis connection URL (e.g., `"redis://localhost:6379"`)
+    /// * `namespace` - Key prefix (for StringKeys mode) or hash key name (for Hash mode)
+    /// * `storage_mode` - Whether to use string keys or hash storage
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use configuration::service::ConfigurationServiceBuilder;
+    /// use configuration::adapters::RedisStorageMode;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> configuration::domain::Result<()> {
+    /// let service = ConfigurationServiceBuilder::new()
+    ///     .with_redis("redis://localhost:6379", "myapp:", RedisStorageMode::StringKeys).await?
+    ///     .build()?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[cfg(feature = "redis_backend")]
+    pub async fn with_redis(
+        self,
+        url: &str,
+        namespace: &str,
+        storage_mode: crate::adapters::RedisStorageMode,
+    ) -> Result<Self> {
+        use crate::adapters::RedisAdapter;
+        let adapter = RedisAdapter::new(url, namespace, storage_mode).await?;
+        Ok(self.with_source(Box::new(adapter)))
+    }
+
+    /// Adds Redis as a configuration source with custom priority.
+    ///
+    /// # Arguments
+    ///
+    /// * `url` - Redis connection URL
+    /// * `namespace` - Key prefix or hash key name
+    /// * `storage_mode` - Whether to use string keys or hash storage
+    /// * `priority` - Priority for this source (higher values override lower values)
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use configuration::service::ConfigurationServiceBuilder;
+    /// use configuration::adapters::RedisStorageMode;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> configuration::domain::Result<()> {
+    /// let service = ConfigurationServiceBuilder::new()
+    ///     .with_redis_priority(
+    ///         "redis://localhost:6379",
+    ///         "myapp:",
+    ///         RedisStorageMode::Hash,
+    ///         2
+    ///     ).await?
+    ///     .build()?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[cfg(feature = "redis_backend")]
+    pub async fn with_redis_priority(
+        self,
+        url: &str,
+        namespace: &str,
+        storage_mode: crate::adapters::RedisStorageMode,
+        priority: u8,
+    ) -> Result<Self> {
+        use crate::adapters::RedisAdapter;
+        let adapter = RedisAdapter::with_priority(url, namespace, storage_mode, priority).await?;
         Ok(self.with_source(Box::new(adapter)))
     }
 
