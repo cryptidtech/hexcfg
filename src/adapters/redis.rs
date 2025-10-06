@@ -10,7 +10,6 @@ use redis::aio::MultiplexedConnection;
 use redis::{AsyncCommands, Client};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::runtime::Runtime;
 
 /// Storage mode for Redis configuration.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -68,8 +67,6 @@ pub struct RedisAdapter {
     priority: u8,
     /// Cached configuration values
     cache: HashMap<String, String>,
-    /// Tokio runtime for async operations
-    runtime: Arc<Runtime>,
 }
 
 impl RedisAdapter {
@@ -103,19 +100,12 @@ impl RedisAdapter {
             source: Some(Box::new(e)),
         })?;
 
-        let runtime = Arc::new(Runtime::new().map_err(|e| ConfigError::SourceError {
-            source_name: "redis".to_string(),
-            message: "Failed to create tokio runtime".to_string(),
-            source: Some(Box::new(e)),
-        })?);
-
         let mut adapter = Self {
             client: Arc::new(client),
             namespace: namespace.to_string(),
             storage_mode,
             priority: 1,
             cache: HashMap::new(),
-            runtime,
         };
 
         // Initial load of all keys
@@ -229,13 +219,105 @@ impl RedisAdapter {
     }
 
     /// Reloads all keys from Redis synchronously.
+    ///
+    /// Note: This method creates a temporary runtime to perform async operations.
+    /// If called from an async context, it will spawn a separate thread to avoid blocking.
     fn reload_sync(&mut self) -> Result<()> {
         let client = Arc::clone(&self.client);
         let namespace = self.namespace.clone();
         let storage_mode = self.storage_mode;
 
-        self.runtime
-            .block_on(async move {
+        // Try to use the current runtime if available, otherwise create a new one
+        let new_cache = if tokio::runtime::Handle::try_current().is_ok() {
+            // We're in an async context, need to spawn a separate thread with its own runtime
+            // to avoid blocking the current runtime's executor
+            let handle = std::thread::spawn(move || {
+                let runtime = tokio::runtime::Runtime::new().map_err(|e| ConfigError::SourceError {
+                    source_name: "redis".to_string(),
+                    message: "Failed to create tokio runtime".to_string(),
+                    source: Some(Box::new(e)),
+                })?;
+
+                runtime.block_on(async move {
+                    let mut conn = client
+                        .get_multiplexed_async_connection()
+                        .await
+                        .map_err(|e| ConfigError::SourceError {
+                            source_name: "redis".to_string(),
+                            message: format!("Failed to connect to Redis: {}", e),
+                            source: Some(Box::new(e)),
+                        })?;
+
+                    let mut new_cache = HashMap::new();
+
+                    match storage_mode {
+                        RedisStorageMode::Hash => {
+                            // Load all fields from hash
+                            let hash: HashMap<String, String> = conn
+                                .hgetall(&namespace)
+                                .await
+                                .map_err(|e| ConfigError::SourceError {
+                                    source_name: "redis".to_string(),
+                                    message: format!("Failed to fetch hash from Redis: {}", e),
+                                    source: Some(Box::new(e)),
+                                })?;
+
+                            new_cache = hash;
+                        }
+                        RedisStorageMode::StringKeys => {
+                            // Scan for keys with prefix
+                            let pattern = format!("{}*", namespace);
+                            let keys: Vec<String> =
+                                conn.keys(&pattern)
+                                    .await
+                                    .map_err(|e| ConfigError::SourceError {
+                                        source_name: "redis".to_string(),
+                                        message: format!("Failed to fetch keys from Redis: {}", e),
+                                        source: Some(Box::new(e)),
+                                    })?;
+
+                            // Fetch all values
+                            for key in keys {
+                                let value: String = conn.get(&key).await.map_err(|e| {
+                                    ConfigError::SourceError {
+                                        source_name: "redis".to_string(),
+                                        message: format!("Failed to fetch value from Redis: {}", e),
+                                        source: Some(Box::new(e)),
+                                    }
+                                })?;
+
+                                // Strip prefix from key
+                                let key = if key.starts_with(&namespace) {
+                                    &key[namespace.len()..]
+                                } else {
+                                    &key
+                                };
+
+                                new_cache.insert(key.to_string(), value);
+                            }
+                        }
+                    }
+
+                    Ok::<HashMap<String, String>, ConfigError>(new_cache)
+                })
+            });
+
+            handle
+                .join()
+                .map_err(|_| ConfigError::SourceError {
+                    source_name: "redis".to_string(),
+                    message: "Failed to join reload thread".to_string(),
+                    source: None,
+                })?
+        } else {
+            // No runtime available, create a temporary one
+            let runtime = tokio::runtime::Runtime::new().map_err(|e| ConfigError::SourceError {
+                source_name: "redis".to_string(),
+                message: "Failed to create tokio runtime".to_string(),
+                source: Some(Box::new(e)),
+            })?;
+
+            runtime.block_on(async move {
                 let mut conn = client
                     .get_multiplexed_async_connection()
                     .await
@@ -294,11 +376,12 @@ impl RedisAdapter {
                     }
                 }
 
-                Ok(new_cache)
+                Ok::<HashMap<String, String>, ConfigError>(new_cache)
             })
-            .map(|cache| {
-                self.cache = cache;
-            })
+        }?;
+
+        self.cache = new_cache;
+        Ok(())
     }
 }
 
@@ -334,42 +417,6 @@ impl ConfigSource for RedisAdapter {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_redis_adapter_name() {
-        // We can't easily test Redis without a running server,
-        // so we'll create mock tests for the traits
-        let runtime = Runtime::new().unwrap();
-        let adapter = runtime.block_on(async {
-            RedisAdapter::new(
-                "redis://localhost:6379",
-                "test:",
-                RedisStorageMode::StringKeys,
-            )
-            .await
-        });
-
-        // Since we don't have a real Redis server, this test just verifies
-        // that the module compiles and the types are correct
-        assert!(adapter.is_err() || adapter.unwrap().name() == "redis");
-    }
-
-    #[test]
-    fn test_redis_adapter_priority() {
-        let runtime = Runtime::new().unwrap();
-        let adapter = runtime.block_on(async {
-            RedisAdapter::with_priority(
-                "redis://localhost:6379",
-                "test:",
-                RedisStorageMode::Hash,
-                5,
-            )
-            .await
-        });
-
-        // This will fail without a real server, which is expected
-        assert!(adapter.is_err() || adapter.unwrap().priority() == 5);
-    }
 
     #[test]
     fn test_redis_storage_modes() {

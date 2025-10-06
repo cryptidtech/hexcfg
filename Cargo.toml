@@ -1,6 +1,6 @@
 [package]
 name = "configuration"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2021"
 authors = ["Dave Grantham <dwg@linuxprogrammer.org>"]
 license = "MIT OR Apache-2.0"
@@ -26,6 +26,8 @@ tokio = { version = "1.0", optional = true, features = ["full"] }
 proptest = "1.0"
 tempfile = "3.0"
 tokio-test = "0.4"
+testcontainers = "0.23"
+testcontainers-modules = { version = "0.10", features = ["redis"] }
 
 [features]
 default = ["yaml", "env", "cli"]
@@ -34,6 +36,6 @@ env = []
 cli = ["dep:clap"]
 reload = ["dep:notify"]
 etcd = ["dep:etcd-client", "dep:tokio"]
-redis_backend = ["dep:redis", "dep:tokio"]
-remote = ["etcd", "redis_backend"]
+redis = ["dep:redis", "dep:tokio"]
+remote = ["etcd", "redis"]
 full = ["yaml", "env", "cli", "reload", "remote"]

@@ -442,7 +442,7 @@ impl ConfigurationServiceBuilder {
     /// # Ok(())
     /// # }
     /// ```
-    #[cfg(feature = "redis_backend")]
+    #[cfg(feature = "redis")]
     pub async fn with_redis(
         self,
         url: &str,
@@ -482,7 +482,7 @@ impl ConfigurationServiceBuilder {
     /// # Ok(())
     /// # }
     /// ```
-    #[cfg(feature = "redis_backend")]
+    #[cfg(feature = "redis")]
     pub async fn with_redis_priority(
         self,
         url: &str,

@@ -12,10 +12,12 @@ pub mod cli;
 pub mod env_var;
 #[cfg(feature = "etcd")]
 pub mod etcd;
-#[cfg(feature = "redis_backend")]
+#[cfg(feature = "redis")]
 pub mod redis;
 #[cfg(feature = "yaml")]
 pub mod yaml_file;
+
+pub mod watchers;
 
 // Re-export adapters based on feature flags
 #[cfg(feature = "cli")]
@@ -24,7 +26,9 @@ pub use cli::CommandLineAdapter;
 pub use env_var::EnvVarAdapter;
 #[cfg(feature = "etcd")]
 pub use etcd::EtcdAdapter;
-#[cfg(feature = "redis_backend")]
+#[cfg(feature = "redis")]
 pub use redis::{RedisAdapter, RedisStorageMode};
+#[cfg(feature = "reload")]
+pub use watchers::FileWatcher;
 #[cfg(feature = "yaml")]
 pub use yaml_file::{YamlFileAdapter, YamlParser};

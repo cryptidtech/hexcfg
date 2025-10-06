@@ -8,8 +8,8 @@ use crate::domain::{ConfigError, ConfigKey, ConfigValue, Result};
 use crate::ports::ConfigSource;
 use etcd_client::{Client, GetOptions};
 use std::collections::HashMap;
+use std::fmt;
 use std::sync::Arc;
-use tokio::runtime::Runtime;
 
 /// Configuration source adapter for etcd.
 ///
@@ -34,18 +34,29 @@ use tokio::runtime::Runtime;
 /// # Ok(())
 /// # }
 /// ```
-#[derive(Debug)]
 pub struct EtcdAdapter {
     /// etcd client
     client: Arc<Client>,
+    /// etcd endpoints for reconnection
+    endpoints: Vec<String>,
     /// Key prefix for namespacing
     prefix: Option<String>,
     /// Priority for this source
     priority: u8,
     /// Cached configuration values
     cache: HashMap<String, String>,
-    /// Tokio runtime for async operations
-    runtime: Arc<Runtime>,
+}
+
+impl fmt::Debug for EtcdAdapter {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("EtcdAdapter")
+            .field("client", &"<etcd::Client>")
+            .field("endpoints", &self.endpoints)
+            .field("prefix", &self.prefix)
+            .field("priority", &self.priority)
+            .field("cache", &self.cache)
+            .finish()
+    }
 }
 
 impl EtcdAdapter {
@@ -80,18 +91,12 @@ impl EtcdAdapter {
                     source: Some(Box::new(e)),
                 })?;
 
-        let runtime = Arc::new(Runtime::new().map_err(|e| ConfigError::SourceError {
-            source_name: "etcd".to_string(),
-            message: "Failed to create tokio runtime".to_string(),
-            source: Some(Box::new(e)),
-        })?);
-
         let mut adapter = Self {
             client: Arc::new(client),
+            endpoints: endpoints.clone(),
             prefix: prefix.map(|s| s.to_string()),
             priority: 1,
             cache: HashMap::new(),
-            runtime,
         };
 
         // Initial load of all keys
@@ -153,7 +158,7 @@ impl EtcdAdapter {
         self.cache.clear();
 
         for kv in response.kvs() {
-            if let (Some(key), Some(value)) = (kv.key_str(), kv.value_str()) {
+            if let (Ok(key), Ok(value)) = (kv.key_str(), kv.value_str()) {
                 // Strip prefix from key
                 let key = if !prefix.is_empty() && key.starts_with(prefix) {
                     &key[prefix.len()..]
@@ -172,14 +177,93 @@ impl EtcdAdapter {
     }
 
     /// Reloads all keys from etcd synchronously.
+    ///
+    /// Note: This method creates a temporary runtime to perform async operations.
+    /// If called from an async context, it will spawn a separate thread to avoid blocking.
     fn reload_sync(&mut self) -> Result<()> {
-        let client = Arc::clone(&self.client);
+        let endpoints = self.endpoints.clone();
         let prefix = self.prefix.clone();
 
-        self.runtime
-            .block_on(async move {
+        // Try to use the current runtime if available, otherwise create a new one
+        let new_cache = if tokio::runtime::Handle::try_current().is_ok() {
+            // We're in an async context, need to spawn a separate thread with its own runtime
+            // to avoid blocking the current runtime's executor
+            let handle = std::thread::spawn(move || {
+                let runtime = tokio::runtime::Runtime::new().map_err(|e| ConfigError::SourceError {
+                    source_name: "etcd".to_string(),
+                    message: "Failed to create tokio runtime".to_string(),
+                    source: Some(Box::new(e)),
+                })?;
+
+                runtime.block_on(async move {
+                    let prefix_str = prefix.as_deref().unwrap_or("");
+
+                    // Connect fresh to etcd
+                    let mut client = Client::connect(&endpoints, None)
+                        .await
+                        .map_err(|e| ConfigError::SourceError {
+                            source_name: "etcd".to_string(),
+                            message: format!("Failed to connect to etcd: {}", e),
+                            source: Some(Box::new(e)),
+                        })?;
+
+                    let options = GetOptions::new().with_prefix();
+                    let response = client.get(prefix_str, Some(options)).await.map_err(|e| {
+                        ConfigError::SourceError {
+                            source_name: "etcd".to_string(),
+                            message: format!("Failed to fetch keys from etcd: {}", e),
+                            source: Some(Box::new(e)),
+                        }
+                    })?;
+
+                    let mut new_cache = HashMap::new();
+
+                    for kv in response.kvs() {
+                        if let (Ok(key), Ok(value)) = (kv.key_str(), kv.value_str()) {
+                            // Strip prefix from key
+                            let key = if !prefix_str.is_empty() && key.starts_with(prefix_str) {
+                                &key[prefix_str.len()..]
+                            } else {
+                                key
+                            };
+
+                            // Convert slashes to dots for consistency
+                            let key = key.replace('/', ".");
+
+                            new_cache.insert(key, value.to_string());
+                        }
+                    }
+
+                    Ok::<HashMap<String, String>, ConfigError>(new_cache)
+                })
+            });
+
+            handle
+                .join()
+                .map_err(|_| ConfigError::SourceError {
+                    source_name: "etcd".to_string(),
+                    message: "Failed to join reload thread".to_string(),
+                    source: None,
+                })?
+        } else {
+            // No runtime available, create a temporary one
+            let runtime = tokio::runtime::Runtime::new().map_err(|e| ConfigError::SourceError {
+                source_name: "etcd".to_string(),
+                message: "Failed to create tokio runtime".to_string(),
+                source: Some(Box::new(e)),
+            })?;
+
+            runtime.block_on(async move {
                 let prefix_str = prefix.as_deref().unwrap_or("");
-                let mut client = (*client).clone();
+
+                // Connect fresh to etcd
+                let mut client = Client::connect(&endpoints, None)
+                    .await
+                    .map_err(|e| ConfigError::SourceError {
+                        source_name: "etcd".to_string(),
+                        message: format!("Failed to connect to etcd: {}", e),
+                        source: Some(Box::new(e)),
+                    })?;
 
                 let options = GetOptions::new().with_prefix();
                 let response = client.get(prefix_str, Some(options)).await.map_err(|e| {
@@ -193,7 +277,7 @@ impl EtcdAdapter {
                 let mut new_cache = HashMap::new();
 
                 for kv in response.kvs() {
-                    if let (Some(key), Some(value)) = (kv.key_str(), kv.value_str()) {
+                    if let (Ok(key), Ok(value)) = (kv.key_str(), kv.value_str()) {
                         // Strip prefix from key
                         let key = if !prefix_str.is_empty() && key.starts_with(prefix_str) {
                             &key[prefix_str.len()..]
@@ -208,11 +292,12 @@ impl EtcdAdapter {
                     }
                 }
 
-                Ok(new_cache)
+                Ok::<HashMap<String, String>, ConfigError>(new_cache)
             })
-            .map(|cache| {
-                self.cache = cache;
-            })
+        }?;
+
+        self.cache = new_cache;
+        Ok(())
     }
 }
 
@@ -245,33 +330,5 @@ impl ConfigSource for EtcdAdapter {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_etcd_adapter_name() {
-        // We can't easily test etcd without a running server,
-        // so we'll create mock tests for the traits
-        let runtime = Runtime::new().unwrap();
-        let adapter = runtime.block_on(async {
-            // This will fail without a real etcd server, which is expected
-            EtcdAdapter::new(vec!["localhost:2379"], None).await
-        });
-
-        // Since we don't have a real etcd server, this test just verifies
-        // that the module compiles and the types are correct
-        assert!(adapter.is_err() || adapter.unwrap().name() == "etcd");
-    }
-
-    #[test]
-    fn test_etcd_adapter_priority() {
-        // Test priority setting
-        let runtime = Runtime::new().unwrap();
-        let adapter = runtime
-            .block_on(async { EtcdAdapter::with_priority(vec!["localhost:2379"], None, 5).await });
-
-        // This will fail without a real server, which is expected
-        assert!(adapter.is_err() || adapter.unwrap().priority() == 5);
-    }
-}
+// Tests for etcd adapter are in tests/etcd_integration_tests.rs
+// (requires Docker to run)
