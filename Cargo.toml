@@ -1,8 +1,8 @@
 [package]
 name = "configuration"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-authors = ["IPDave Contributors"]
+authors = ["Dave Grantham <dwg@linuxprogrammer.org>"]
 license = "MIT OR Apache-2.0"
 description = "A hexagonal architecture configuration management crate with multi-source support"
 keywords = ["config", "configuration", "yaml", "environment", "etcd"]

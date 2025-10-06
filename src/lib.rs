@@ -54,10 +54,12 @@
 #![warn(clippy::all)]
 
 pub mod domain;
+pub mod ports;
 
 /// Commonly used types and traits.
 ///
 /// This module re-exports the most commonly used types and traits for convenient access.
 pub mod prelude {
-    pub use crate::domain::{ConfigError, ConfigKey, ConfigValue, Result};
+    pub use crate::domain::{ConfigError, ConfigKey, ConfigValue, ConfigurationService, Result};
+    pub use crate::ports::{ConfigParser, ConfigSource, ConfigWatcher};
 }
