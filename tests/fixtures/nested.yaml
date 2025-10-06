@@ -1,0 +1,39 @@
+# Nested configuration with deep hierarchies
+app:
+  info:
+    name: NestedApp
+    version:
+      major: 2
+      minor: 5
+      patch: 10
+  features:
+    authentication:
+      enabled: true
+      providers:
+        oauth:
+          client_id: abc123
+          client_secret: xyz789
+        local:
+          enabled: true
+
+database:
+  primary:
+    connection:
+      host: db1.example.com
+      port: 5432
+      ssl: true
+  replica:
+    connection:
+      host: db2.example.com
+      port: 5432
+      ssl: true
+
+logging:
+  level: info
+  outputs:
+    console:
+      enabled: true
+      format: json
+    file:
+      enabled: true
+      path: /var/log/app.log

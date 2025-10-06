@@ -1,0 +1,30 @@
+# Configuration with arrays and mixed types
+servers:
+  - host: server1.example.com
+    port: 8080
+  - host: server2.example.com
+    port: 8080
+  - host: server3.example.com
+    port: 8080
+
+allowed_hosts:
+  - localhost
+  - 127.0.0.1
+  - "*.example.com"
+
+feature_flags:
+  - experimental_ui
+  - new_api
+  - beta_features
+
+numbers:
+  - 1
+  - 2
+  - 3
+  - 42
+
+mixed_array:
+  - string_value
+  - 123
+  - true
+  - null

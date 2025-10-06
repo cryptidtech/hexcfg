@@ -53,6 +53,7 @@
 #![deny(rustdoc::broken_intra_doc_links)]
 #![warn(clippy::all)]
 
+pub mod adapters;
 pub mod domain;
 pub mod ports;
 
@@ -62,4 +63,12 @@ pub mod ports;
 pub mod prelude {
     pub use crate::domain::{ConfigError, ConfigKey, ConfigValue, ConfigurationService, Result};
     pub use crate::ports::{ConfigParser, ConfigSource, ConfigWatcher};
+
+    // Re-export adapters based on feature flags
+    #[cfg(feature = "cli")]
+    pub use crate::adapters::CommandLineAdapter;
+    #[cfg(feature = "env")]
+    pub use crate::adapters::EnvVarAdapter;
+    #[cfg(feature = "yaml")]
+    pub use crate::adapters::{YamlFileAdapter, YamlParser};
 }
