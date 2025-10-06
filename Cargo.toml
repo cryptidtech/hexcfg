@@ -1,0 +1,39 @@
+[package]
+name = "configuration"
+version = "0.1.0"
+edition = "2021"
+authors = ["IPDave Contributors"]
+license = "MIT OR Apache-2.0"
+description = "A hexagonal architecture configuration management crate with multi-source support"
+keywords = ["config", "configuration", "yaml", "environment", "etcd"]
+categories = ["config", "development-tools"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = { version = "0.9", optional = true }
+thiserror = "1.0"
+directories = "5.0"
+tracing = "0.1"
+
+# Optional features
+clap = { version = "4.0", optional = true }
+etcd-client = { version = "0.12", optional = true }
+redis = { version = "0.23", optional = true, features = ["tokio-comp"] }
+notify = { version = "6.0", optional = true }
+tokio = { version = "1.0", optional = true, features = ["full"] }
+
+[dev-dependencies]
+proptest = "1.0"
+tempfile = "3.0"
+tokio-test = "0.4"
+
+[features]
+default = ["yaml", "env", "cli"]
+yaml = ["dep:serde_yaml"]
+env = []
+cli = ["dep:clap"]
+reload = ["dep:notify"]
+etcd = ["dep:etcd-client", "dep:tokio"]
+redis_backend = ["dep:redis", "dep:tokio"]
+remote = ["etcd", "redis_backend"]
+full = ["yaml", "env", "cli", "reload", "remote"]
