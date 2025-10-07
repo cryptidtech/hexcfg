@@ -127,6 +127,39 @@ impl EnvVarAdapter {
         self
     }
 
+    /// Creates an adapter with pre-populated values for testing.
+    ///
+    /// **Note**: This method is primarily intended for testing and should not
+    /// be used in production code. Use `new()` or `with_prefix()` for normal usage.
+    ///
+    /// This method is useful for testing scenarios where you want to
+    /// provide specific environment variable values without actually
+    /// setting them in the process environment.
+    ///
+    /// # Arguments
+    ///
+    /// * `values` - A HashMap of key-value pairs to use as environment variables
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use configuration::adapters::EnvVarAdapter;
+    /// use std::collections::HashMap;
+    ///
+    /// let mut values = HashMap::new();
+    /// values.insert("test.key".to_string(), "test_value".to_string());
+    ///
+    /// let adapter = EnvVarAdapter::with_values(values);
+    /// ```
+    pub fn with_values(values: HashMap<String, String>) -> Self {
+        Self {
+            prefix: None,
+            lowercase_keys: false,
+            replace_underscores: false,
+            cache: values,
+        }
+    }
+
     /// Loads environment variables into the cache.
     fn load(&mut self) {
         self.cache.clear();
