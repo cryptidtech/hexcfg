@@ -87,33 +87,39 @@ configuration = { version = "0.7.0", default-features = false, features = ["yaml
 This crate follows hexagonal architecture principles:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                     Application                         │
-│                                                         │
-│  ┌───────────────────────────────────────────────────┐ │
-│  │              Domain Layer                         │ │
-│  │  • ConfigKey, ConfigValue (core types)           │ │
-│  │  • ConfigurationService (business logic)         │ │
-│  │  • ConfigError (error types)                     │ │
-│  └───────────────────────────────────────────────────┘ │
-│                         │                               │
-│  ┌───────────────────────────────────────────────────┐ │
-│  │               Ports Layer                         │ │
-│  │  • ConfigSource trait (source interface)         │ │
-│  │  • ConfigWatcher trait (watcher interface)       │ │
-│  │  • ConfigParser trait (parser interface)         │ │
-│  └───────────────────────────────────────────────────┘ │
-│                         │                               │
-│  ┌───────────────────────────────────────────────────┐ │
-│  │             Adapters Layer                        │ │
-│  │  • YamlFileAdapter                               │ │
-│  │  • EnvVarAdapter                                 │ │
-│  │  • CommandLineAdapter                            │ │
-│  │  • EtcdAdapter                                   │ │
-│  │  • RedisAdapter                                  │ │
-│  │  • FileWatcher                                   │ │
-│  └───────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────┐
+│                     Application                   │
+│                                                   │
+│  ┌─────────────────────────────────────────────┐  │
+│  │                 Domain Layer                │  │
+│  │                                             │  │
+│  │  • ConfigKey, ConfigValue (core types)      │  │
+│  │  • ConfigurationService (business logic)    │  │
+│  │  • ConfigError (error types)                │  │
+│  │                                             │  │
+│  └─────────────────────────────────────────────┘  │
+│                         │                         │
+│  ┌─────────────────────────────────────────────┐  │
+│  │                 Ports Layer                 │  │
+│  │                                             │  │
+│  │  • ConfigSource trait (source interface)    │  │
+│  │  • ConfigWatcher trait (watcher interface)  │  │
+│  │  • ConfigParser trait (parser interface)    │  │
+│  │                                             │  │
+│  └─────────────────────────────────────────────┘  │
+│                         │                         │
+│  ┌─────────────────────────────────────────────┐  │
+│  │                Adapters Layer               │  │
+│  │                                             │  │
+│  │  • YamlFileAdapter                          │  │
+│  │  • EnvVarAdapter                            │  │
+│  │  • CommandLineAdapter                       │  │
+│  │  • EtcdAdapter                              │  │
+│  │  • RedisAdapter                             │  │
+│  │  • FileWatcher                              │  │
+│  │                                             │  │
+│  └─────────────────────────────────────────────┘  │
+└───────────────────────────────────────────────────┘
 ```
 
 ## String Convenience Methods
