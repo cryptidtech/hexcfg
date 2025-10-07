@@ -213,18 +213,17 @@ impl EtcdAdapter {
             // We're in an async context, need to spawn a separate thread with the shared runtime
             // to avoid blocking the current runtime's executor
             let handle = std::thread::spawn(move || {
-
                 RELOAD_RUNTIME.block_on(async move {
                     let prefix_str = prefix.as_deref().unwrap_or("");
 
                     // Connect fresh to etcd
-                    let mut client = Client::connect(&endpoints, None)
-                        .await
-                        .map_err(|e| ConfigError::SourceError {
+                    let mut client = Client::connect(&endpoints, None).await.map_err(|e| {
+                        ConfigError::SourceError {
                             source_name: "etcd".to_string(),
                             message: format!("Failed to connect to etcd: {}", e),
                             source: Some(Box::new(e)),
-                        })?;
+                        }
+                    })?;
 
                     let options = GetOptions::new().with_prefix();
                     let response = client.get(prefix_str, Some(options)).await.map_err(|e| {
@@ -257,26 +256,24 @@ impl EtcdAdapter {
                 })
             });
 
-            handle
-                .join()
-                .map_err(|_| ConfigError::SourceError {
-                    source_name: "etcd".to_string(),
-                    message: "Failed to join reload thread".to_string(),
-                    source: None,
-                })?
+            handle.join().map_err(|_| ConfigError::SourceError {
+                source_name: "etcd".to_string(),
+                message: "Failed to join reload thread".to_string(),
+                source: None,
+            })?
         } else {
             // No runtime available, use the shared runtime
             RELOAD_RUNTIME.block_on(async move {
                 let prefix_str = prefix.as_deref().unwrap_or("");
 
                 // Connect fresh to etcd
-                let mut client = Client::connect(&endpoints, None)
-                    .await
-                    .map_err(|e| ConfigError::SourceError {
+                let mut client = Client::connect(&endpoints, None).await.map_err(|e| {
+                    ConfigError::SourceError {
                         source_name: "etcd".to_string(),
                         message: format!("Failed to connect to etcd: {}", e),
                         source: Some(Box::new(e)),
-                    })?;
+                    }
+                })?;
 
                 let options = GetOptions::new().with_prefix();
                 let response = client.get(prefix_str, Some(options)).await.map_err(|e| {

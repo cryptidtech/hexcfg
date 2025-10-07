@@ -71,11 +71,18 @@ impl ConfigSource for MockConfigSource {
     }
 
     fn get(&self, key: &ConfigKey) -> Result<Option<ConfigValue>> {
-        Ok(self.values.get(key.as_str()).map(|v| ConfigValue::from(v.as_str())))
+        Ok(self
+            .values
+            .get(key.as_str())
+            .map(|v| ConfigValue::from(v.as_str())))
     }
 
     fn all_keys(&self) -> Result<Vec<ConfigKey>> {
-        Ok(self.values.keys().map(|k| ConfigKey::from(k.as_str())).collect())
+        Ok(self
+            .values
+            .keys()
+            .map(|k| ConfigKey::from(k.as_str()))
+            .collect())
     }
 
     fn reload(&mut self) -> Result<()> {
@@ -136,8 +143,7 @@ mod tests {
 
     #[test]
     fn test_mock_source_basic() {
-        let source = MockConfigSource::new("test", 1)
-            .with_value("key", "value");
+        let source = MockConfigSource::new("test", 1).with_value("key", "value");
 
         assert_eq!(source.name(), "test");
         assert_eq!(source.priority(), 1);
@@ -160,8 +166,7 @@ mod tests {
 
     #[test]
     fn test_mock_source_update() {
-        let mut source = MockConfigSource::new("test", 1)
-            .with_value("key", "original");
+        let mut source = MockConfigSource::new("test", 1).with_value("key", "original");
 
         source.update_value("key", "updated");
 
@@ -171,8 +176,7 @@ mod tests {
 
     #[test]
     fn test_mock_source_reload_failure() {
-        let mut source = MockConfigSource::new("test", 1)
-            .with_failing_reload(true);
+        let mut source = MockConfigSource::new("test", 1).with_failing_reload(true);
 
         let result = source.reload();
         assert!(result.is_err());
@@ -183,7 +187,10 @@ mod tests {
         let source = create_test_source();
         assert_eq!(source.name(), "test");
 
-        let value = source.get(&ConfigKey::from("string.value")).unwrap().unwrap();
+        let value = source
+            .get(&ConfigKey::from("string.value"))
+            .unwrap()
+            .unwrap();
         assert_eq!(value.as_str(), "test");
     }
 

@@ -30,9 +30,7 @@ fn main() -> Result<()> {
 
     // Create a configuration service with environment variables
     // The builder pattern makes it easy to configure the service
-    let service = DefaultConfigService::builder()
-        .with_env_vars()
-        .build()?;
+    let service = DefaultConfigService::builder().with_env_vars().build()?;
 
     println!("Configuration service created with environment variables.\n");
 
@@ -56,12 +54,10 @@ fn main() -> Result<()> {
     let port_key = ConfigKey::from("database.port");
 
     match service.get(&port_key) {
-        Ok(value) => {
-            match value.as_i32("database.port") {
-                Ok(port) => println!("✓ DATABASE_PORT found: {} (as i32)", port),
-                Err(e) => println!("✗ DATABASE_PORT found but conversion failed: {}", e),
-            }
-        }
+        Ok(value) => match value.as_i32("database.port") {
+            Ok(port) => println!("✓ DATABASE_PORT found: {} (as i32)", port),
+            Err(e) => println!("✗ DATABASE_PORT found but conversion failed: {}", e),
+        },
         Err(_) => {
             println!("✗ DATABASE_PORT not found, using default: 3000");
         }
@@ -72,12 +68,10 @@ fn main() -> Result<()> {
     let debug_key = ConfigKey::from("enable.debug");
 
     match service.get(&debug_key) {
-        Ok(value) => {
-            match value.as_bool("enable.debug") {
-                Ok(enabled) => println!("✓ ENABLE_DEBUG found: {} (as bool)", enabled),
-                Err(e) => println!("✗ ENABLE_DEBUG found but conversion failed: {}", e),
-            }
-        }
+        Ok(value) => match value.as_bool("enable.debug") {
+            Ok(enabled) => println!("✓ ENABLE_DEBUG found: {} (as bool)", enabled),
+            Err(e) => println!("✗ ENABLE_DEBUG found but conversion failed: {}", e),
+        },
         Err(_) => {
             println!("✗ ENABLE_DEBUG not found, using default: false");
         }
@@ -88,12 +82,10 @@ fn main() -> Result<()> {
     let timeout_key = ConfigKey::from("api.timeout");
 
     match service.get(&timeout_key) {
-        Ok(value) => {
-            match value.as_f64("api.timeout") {
-                Ok(timeout) => println!("✓ API_TIMEOUT found: {} seconds (as f64)", timeout),
-                Err(e) => println!("✗ API_TIMEOUT found but conversion failed: {}", e),
-            }
-        }
+        Ok(value) => match value.as_f64("api.timeout") {
+            Ok(timeout) => println!("✓ API_TIMEOUT found: {} seconds (as f64)", timeout),
+            Err(e) => println!("✗ API_TIMEOUT found but conversion failed: {}", e),
+        },
         Err(_) => {
             println!("✗ API_TIMEOUT not found, using default: 10.0 seconds");
         }
@@ -113,7 +105,10 @@ fn main() -> Result<()> {
     println!("\n--- Example 6: Optional Configuration with Defaults ---");
     let log_level_key = ConfigKey::from("log.level");
     let log_level = service.get_or_default(&log_level_key, "info");
-    println!("Log level: {} (from LOG_LEVEL or default)", log_level.as_str());
+    println!(
+        "Log level: {} (from LOG_LEVEL or default)",
+        log_level.as_str()
+    );
 
     println!("\n=== Example Complete ===");
     println!("\nTip: Try setting different environment variables and running again!");

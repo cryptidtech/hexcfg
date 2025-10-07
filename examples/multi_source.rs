@@ -61,7 +61,10 @@ features:
     let temp_file = tempfile::NamedTempFile::new()?;
     std::fs::write(temp_file.path(), yaml_content)?;
 
-    println!("Created temporary YAML config file at: {:?}\n", temp_file.path());
+    println!(
+        "Created temporary YAML config file at: {:?}\n",
+        temp_file.path()
+    );
 
     // Collect command-line arguments
     let cli_args: Vec<String> = env::args().collect();
@@ -158,12 +161,10 @@ fn print_bool_value(service: &DefaultConfigService, key: &str) {
     let config_key = ConfigKey::from(key);
 
     match service.get(&config_key) {
-        Ok(value) => {
-            match value.as_bool(key) {
-                Ok(b) => println!("  Current value: {} (boolean)", b),
-                Err(_) => println!("  Current value: {} (not a valid boolean)", value.as_str()),
-            }
-        }
+        Ok(value) => match value.as_bool(key) {
+            Ok(b) => println!("  Current value: {} (boolean)", b),
+            Err(_) => println!("  Current value: {} (not a valid boolean)", value.as_str()),
+        },
         Err(_) => {
             println!("  ✗ Not found");
         }

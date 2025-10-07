@@ -11,7 +11,7 @@ A flexible, type-safe configuration management library for Rust applications, bu
 - **Multiple Configuration Sources**: Environment variables, YAML files, command-line arguments, etcd, and Redis
 - **Type Safety**: Automatic type conversions with comprehensive error handling
 - **Priority-Based Precedence**: CLI arguments override environment variables, which override configuration files
-- **Dynamic Reloading**: Watch configuration files for changes and reload automatically
+- **Dynamic Reloading**: Watch configuration files, etcd, and Redis for changes and reload automatically
 - **Hexagonal Architecture**: Clean separation of concerns with domain, ports, and adapters
 - **Extensible**: Easy to implement custom configuration sources via traits
 - **Async Support**: Built-in support for async remote sources (etcd, Redis)
@@ -116,7 +116,7 @@ This crate follows hexagonal architecture principles:
 │  │  • CommandLineAdapter                       │  │
 │  │  • EtcdAdapter                              │  │
 │  │  • RedisAdapter                             │  │
-│  │  • FileWatcher                              │  │
+│  │  • FileWatcher, EtcdWatcher, RedisWatcher   │  │
 │  │                                             │  │
 │  └─────────────────────────────────────────────┘  │
 └───────────────────────────────────────────────────┘
@@ -294,6 +294,97 @@ async fn main() -> Result<()> {
 }
 ```
 
+### Watching Remote Configuration Changes
+
+#### etcd Watcher
+
+Watch for configuration changes in etcd using its native watch API:
+
+```rust
+use configuration::prelude::*;
+use configuration::adapters::EtcdWatcher;
+use configuration::ports::ConfigWatcher;
+use std::sync::{Arc, Mutex};
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    let service = Arc::new(Mutex::new(
+        ConfigurationServiceBuilder::new()
+            .with_etcd(vec!["localhost:2379"], Some("myapp/")).await?
+            .build()?
+    ));
+
+    let mut watcher = EtcdWatcher::new(
+        vec!["localhost:2379"],
+        Some("myapp/")
+    ).await?;
+
+    let service_clone = Arc::clone(&service);
+    watcher.watch(Arc::new(move |key| {
+        println!("Configuration changed in etcd: {}", key);
+        if let Ok(mut svc) = service_clone.lock() {
+            let _ = svc.reload();
+        }
+    }))?;
+
+    // Application continues running with live config updates from etcd
+
+    Ok(())
+}
+```
+
+#### Redis Watcher
+
+Watch for configuration changes in Redis using keyspace notifications:
+
+```rust
+use configuration::prelude::*;
+use configuration::adapters::RedisWatcher;
+use configuration::ports::ConfigWatcher;
+use std::sync::{Arc, Mutex};
+
+fn main() -> Result<()> {
+    let service = Arc::new(Mutex::new(
+        ConfigurationServiceBuilder::new()
+            .with_redis(
+                "redis://localhost:6379",
+                "myapp:",
+                RedisStorageMode::StringKeys
+            ).await?
+            .build()?
+    ));
+
+    let mut watcher = RedisWatcher::new(
+        "redis://localhost:6379",
+        "myapp:"
+    )?;
+
+    // Try to enable keyspace notifications (requires CONFIG permission)
+    let _ = watcher.try_enable_keyspace_notifications();
+
+    let service_clone = Arc::clone(&service);
+    watcher.watch(Arc::new(move |key| {
+        println!("Configuration changed in Redis: {}", key);
+        if let Ok(mut svc) = service_clone.lock() {
+            let _ = svc.reload();
+        }
+    }))?;
+
+    // Application continues running with live config updates from Redis
+
+    Ok(())
+}
+```
+
+**Note**: Redis keyspace notifications must be enabled on the Redis server:
+```bash
+# Via redis-cli
+CONFIG SET notify-keyspace-events KEA
+
+# Or in redis.conf
+notify-keyspace-events KEA
+```
+
 ## Custom Configuration Sources
 
 Implement the `ConfigSource` trait to create custom sources:
@@ -405,6 +496,24 @@ cargo test --features yaml,env,cli
 cargo test --test proptest_tests
 ```
 
+### Remote Watcher Integration Tests
+
+Integration tests for etcd and Redis watchers are included in their respective integration test files and use Docker containers automatically via `testcontainers-rs`. These tests will automatically skip if Docker is not available:
+
+```bash
+# Run all Redis tests (including watcher tests)
+cargo test --test redis_integration_tests --all-features
+
+# Run all etcd tests (including watcher tests)
+cargo test --test etcd_integration_tests --all-features
+
+# Run specific watcher tests
+cargo test --test redis_integration_tests test_redis_watcher --all-features
+cargo test --test etcd_integration_tests test_etcd_watcher --all-features
+```
+
+Docker must be installed and running for these tests to execute. If Docker is unavailable, the tests will be skipped with a warning message.
+
 ## Documentation
 
 Generate and view the full API documentation:
@@ -437,7 +546,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ## Project Status
 
-This crate is currently in development. Version 0.7.0 includes:
+This crate is currently at version 1.0.0 and includes:
 
 - ✅ Core domain types (ConfigKey, ConfigValue)
 - ✅ Configuration service with priority-based source management

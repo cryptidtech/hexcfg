@@ -270,16 +270,16 @@ impl RedisAdapter {
             // We're in an async context, need to spawn a separate thread with the shared runtime
             // to avoid blocking the current runtime's executor
             let handle = std::thread::spawn(move || {
-
                 RELOAD_RUNTIME.block_on(async move {
-                    let mut conn = client
-                        .get_multiplexed_async_connection()
-                        .await
-                        .map_err(|e| ConfigError::SourceError {
-                            source_name: "redis".to_string(),
-                            message: format!("Failed to connect to Redis: {}", e),
-                            source: Some(Box::new(e)),
-                        })?;
+                    let mut conn =
+                        client
+                            .get_multiplexed_async_connection()
+                            .await
+                            .map_err(|e| ConfigError::SourceError {
+                                source_name: "redis".to_string(),
+                                message: format!("Failed to connect to Redis: {}", e),
+                                source: Some(Box::new(e)),
+                            })?;
 
                     let mut new_cache = HashMap::new();
 
@@ -327,13 +327,12 @@ impl RedisAdapter {
 
                             // Fetch all values
                             for key in all_keys {
-                                let value: String = conn.get(&key).await.map_err(|e| {
-                                    ConfigError::SourceError {
+                                let value: String =
+                                    conn.get(&key).await.map_err(|e| ConfigError::SourceError {
                                         source_name: "redis".to_string(),
                                         message: format!("Failed to fetch value from Redis: {}", e),
                                         source: Some(Box::new(e)),
-                                    }
-                                })?;
+                                    })?;
 
                                 // Strip prefix from key
                                 let key = if key.starts_with(&namespace) {
@@ -351,13 +350,11 @@ impl RedisAdapter {
                 })
             });
 
-            handle
-                .join()
-                .map_err(|_| ConfigError::SourceError {
-                    source_name: "redis".to_string(),
-                    message: "Failed to join reload thread".to_string(),
-                    source: None,
-                })?
+            handle.join().map_err(|_| ConfigError::SourceError {
+                source_name: "redis".to_string(),
+                message: "Failed to join reload thread".to_string(),
+                source: None,
+            })?
         } else {
             // No runtime available, use the shared runtime
             RELOAD_RUNTIME.block_on(async move {

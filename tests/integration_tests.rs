@@ -9,8 +9,8 @@ use configuration::adapters::{CommandLineAdapter, EnvVarAdapter, YamlFileAdapter
 use configuration::domain::{ConfigKey, ConfigurationService};
 use configuration::service::{ConfigurationServiceBuilder, DefaultConfigService};
 use std::collections::HashMap;
-use tempfile::NamedTempFile;
 use std::io::Write;
+use tempfile::NamedTempFile;
 
 #[test]
 fn test_get_basic_value() {
@@ -249,7 +249,9 @@ fn test_special_characters_in_keys() {
     let val1 = service.get(&ConfigKey::from("key.with.dots")).unwrap();
     assert_eq!(val1.as_str(), "value1");
 
-    let val2 = service.get(&ConfigKey::from("key_with_underscores")).unwrap();
+    let val2 = service
+        .get(&ConfigKey::from("key_with_underscores"))
+        .unwrap();
     assert_eq!(val2.as_str(), "value2");
 }
 

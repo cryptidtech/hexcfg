@@ -154,23 +154,27 @@ impl YamlFileAdapter {
         let parser = YamlParser::new();
 
         // Canonicalize path to prevent directory traversal attacks
-        let canonical_path = file_path.canonicalize().map_err(|e| ConfigError::SourceError {
-            source_name: "yaml-file".to_string(),
-            message: format!(
-                "Invalid or inaccessible path: {}",
-                file_path.file_name()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or("<unknown>")
-            ),
-            source: Some(Box::new(e)),
-        })?;
+        let canonical_path = file_path
+            .canonicalize()
+            .map_err(|e| ConfigError::SourceError {
+                source_name: "yaml-file".to_string(),
+                message: format!(
+                    "Invalid or inaccessible path: {}",
+                    file_path
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("<unknown>")
+                ),
+                source: Some(Box::new(e)),
+            })?;
 
         // Check file size before reading to prevent DoS via large files
         let metadata = fs::metadata(&canonical_path).map_err(|e| ConfigError::SourceError {
             source_name: "yaml-file".to_string(),
             message: format!(
                 "Failed to read file metadata: {}",
-                canonical_path.file_name()
+                canonical_path
+                    .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or("<unknown>")
             ),
@@ -190,16 +194,18 @@ impl YamlFileAdapter {
         }
 
         // Read file content
-        let content = fs::read_to_string(&canonical_path).map_err(|e| ConfigError::SourceError {
-            source_name: "yaml-file".to_string(),
-            message: format!(
-                "Failed to read configuration file: {}",
-                canonical_path.file_name()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or("<unknown>")
-            ),
-            source: Some(Box::new(e)),
-        })?;
+        let content =
+            fs::read_to_string(&canonical_path).map_err(|e| ConfigError::SourceError {
+                source_name: "yaml-file".to_string(),
+                message: format!(
+                    "Failed to read configuration file: {}",
+                    canonical_path
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("<unknown>")
+                ),
+                source: Some(Box::new(e)),
+            })?;
 
         let values = parser.parse(&content)?;
 
@@ -306,7 +312,8 @@ impl ConfigSource for YamlFileAdapter {
             source_name: "yaml-file".to_string(),
             message: format!(
                 "Failed to read file metadata: {}",
-                self.file_path.file_name()
+                self.file_path
+                    .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or("<unknown>")
             ),
@@ -330,7 +337,8 @@ impl ConfigSource for YamlFileAdapter {
                 source_name: "yaml-file".to_string(),
                 message: format!(
                     "Failed to read configuration file: {}",
-                    self.file_path.file_name()
+                    self.file_path
+                        .file_name()
                         .and_then(|n| n.to_str())
                         .unwrap_or("<unknown>")
                 ),

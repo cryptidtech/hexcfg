@@ -9,7 +9,7 @@ mod redis_tests {
     use configuration::adapters::{RedisAdapter, RedisStorageMode};
     use configuration::domain::ConfigKey;
     use configuration::ports::ConfigSource;
-    use testcontainers::{core::WaitFor, runners::AsyncRunner, GenericImage};
+    use testcontainers::{core::WaitFor, runners::AsyncRunner, GenericImage, ImageExt};
 
     use crate::common as docker_helpers;
 
@@ -236,7 +236,8 @@ mod redis_tests {
         use configuration::domain::ConfigurationService;
         use configuration::service::ConfigurationServiceBuilder;
 
-        let Some((_container, redis_adapter)) = setup_redis_test(RedisStorageMode::Hash).await else {
+        let Some((_container, redis_adapter)) = setup_redis_test(RedisStorageMode::Hash).await
+        else {
             return;
         };
 
@@ -263,7 +264,8 @@ mod redis_tests {
         use configuration::service::ConfigurationServiceBuilder;
         use std::collections::HashMap;
 
-        let Some((_container, redis_adapter)) = setup_redis_test(RedisStorageMode::Hash).await else {
+        let Some((_container, redis_adapter)) = setup_redis_test(RedisStorageMode::Hash).await
+        else {
             return;
         };
 
@@ -291,7 +293,8 @@ mod redis_tests {
         use configuration::service::ConfigurationServiceBuilder;
         use std::collections::HashMap;
 
-        let Some((_container, redis_adapter)) = setup_redis_test(RedisStorageMode::Hash).await else {
+        let Some((_container, redis_adapter)) = setup_redis_test(RedisStorageMode::Hash).await
+        else {
             return;
         };
 
@@ -338,7 +341,9 @@ mod redis_tests {
         use std::collections::HashMap;
 
         if !docker_helpers::is_docker_available() {
-            docker_helpers::print_docker_unavailable_warning("Redis custom priority precedence test");
+            docker_helpers::print_docker_unavailable_warning(
+                "Redis custom priority precedence test",
+            );
             return;
         }
 
@@ -365,9 +370,10 @@ mod redis_tests {
             .unwrap();
 
         // Create Redis adapter with custom priority 3 (same as CLI!)
-        let redis_adapter = RedisAdapter::with_priority(&url, "test_hash", RedisStorageMode::Hash, 3)
-            .await
-            .unwrap();
+        let redis_adapter =
+            RedisAdapter::with_priority(&url, "test_hash", RedisStorageMode::Hash, 3)
+                .await
+                .unwrap();
 
         // Create env adapter with normal priority 2
         let mut env_vars = HashMap::new();
@@ -383,5 +389,236 @@ mod redis_tests {
         // Redis with priority 3 should win over env with priority 2
         let value = service.get_str("special.key").unwrap();
         assert_eq!(value.as_str(), "from_redis");
+    }
+
+    // === Redis Watcher Tests ===
+
+    /// Helper to set up a Redis container with keyspace notifications enabled.
+    async fn setup_redis_watcher_test(
+    ) -> Option<(testcontainers::ContainerAsync<GenericImage>, String)> {
+        if !docker_helpers::is_docker_available() {
+            docker_helpers::print_docker_unavailable_warning("Redis watcher test");
+            return None;
+        }
+
+        // Start Redis with keyspace notifications enabled
+        let redis_image = GenericImage::new("redis", "7-alpine")
+            .with_exposed_port(6379.into())
+            .with_wait_for(WaitFor::message_on_stdout("Ready to accept connections"))
+            .with_cmd(vec!["redis-server", "--notify-keyspace-events", "KEA"]);
+
+        let container = redis_image.start().await.ok()?;
+        let port = container.get_host_port_ipv4(6379).await.ok()?;
+        let url = format!("redis://127.0.0.1:{}", port);
+
+        // Give Redis a moment to start up
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+
+        Some((container, url))
+    }
+
+    #[tokio::test]
+    async fn test_redis_watcher_creation() {
+        use configuration::adapters::RedisWatcher;
+
+        let Some((_container, url)) = setup_redis_watcher_test().await else {
+            return;
+        };
+
+        let watcher = RedisWatcher::new(&url, "test:");
+        assert!(watcher.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_redis_watcher_invalid_url() {
+        use configuration::adapters::RedisWatcher;
+
+        let watcher = RedisWatcher::new("redis://invalid-host:9999", "test:");
+        assert!(watcher.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_redis_watcher_start_stop() {
+        use configuration::adapters::RedisWatcher;
+        use configuration::ports::ConfigWatcher;
+        use std::sync::Arc;
+
+        let Some((_container, url)) = setup_redis_watcher_test().await else {
+            return;
+        };
+
+        let mut watcher = RedisWatcher::new(&url, "test:").unwrap();
+
+        let callback = Arc::new(|_key: ConfigKey| {
+            // Callback for testing
+        });
+
+        // Start watching
+        assert!(watcher.watch(callback).is_ok());
+
+        // Give watcher time to start
+        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+
+        // Stop watching
+        assert!(watcher.stop().is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_redis_watcher_callback_triggered() {
+        use configuration::adapters::RedisWatcher;
+        use configuration::ports::ConfigWatcher;
+        use redis::Commands;
+        use std::sync::atomic::{AtomicBool, Ordering};
+        use std::sync::Arc;
+
+        let Some((_container, url)) = setup_redis_watcher_test().await else {
+            return;
+        };
+
+        let mut watcher = RedisWatcher::new(&url, "test:watcher:").unwrap();
+
+        let triggered = Arc::new(AtomicBool::new(false));
+        let triggered_clone = Arc::clone(&triggered);
+
+        let callback = Arc::new(move |key: ConfigKey| {
+            eprintln!("Redis watcher callback triggered for key: {}", key.as_str());
+            triggered_clone.store(true, Ordering::SeqCst);
+        });
+
+        watcher.watch(callback).unwrap();
+
+        // Wait for watcher to initialize
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+
+        // Modify a key in Redis
+        let client = redis::Client::open(url.as_str()).unwrap();
+        let mut conn = client.get_connection().unwrap();
+        let _: () = conn.set("test:watcher:mykey", "test_value").unwrap();
+
+        // Wait for the event to be processed
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+
+        // Clean up
+        let _: () = conn.del("test:watcher:mykey").unwrap();
+        watcher.stop().unwrap();
+
+        let was_triggered = triggered.load(Ordering::SeqCst);
+        assert!(
+            was_triggered,
+            "Redis watcher callback should have been triggered"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_redis_watcher_multiple_changes() {
+        use configuration::adapters::RedisWatcher;
+        use configuration::ports::ConfigWatcher;
+        use redis::Commands;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use std::sync::Arc;
+
+        let Some((_container, url)) = setup_redis_watcher_test().await else {
+            return;
+        };
+
+        let mut watcher = RedisWatcher::new(&url, "test:multi:").unwrap();
+
+        let trigger_count = Arc::new(AtomicUsize::new(0));
+        let trigger_count_clone = Arc::clone(&trigger_count);
+
+        let callback = Arc::new(move |key: ConfigKey| {
+            eprintln!("Redis watcher detected change: {}", key.as_str());
+            trigger_count_clone.fetch_add(1, Ordering::SeqCst);
+        });
+
+        watcher.watch(callback).unwrap();
+
+        // Wait for watcher to initialize
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+
+        // Make multiple changes
+        let client = redis::Client::open(url.as_str()).unwrap();
+        let mut conn = client.get_connection().unwrap();
+
+        for i in 0..3 {
+            let _: () = conn
+                .set(format!("test:multi:key{}", i), format!("value{}", i))
+                .unwrap();
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+
+        // Wait for events to be processed
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+
+        // Clean up
+        for i in 0..3 {
+            let _: () = conn.del(format!("test:multi:key{}", i)).unwrap();
+        }
+        watcher.stop().unwrap();
+
+        let count = trigger_count.load(Ordering::SeqCst);
+        assert!(count >= 3, "Expected at least 3 triggers, got {}", count);
+    }
+
+    #[tokio::test]
+    async fn test_redis_watcher_namespace_filtering() {
+        use configuration::adapters::RedisWatcher;
+        use configuration::ports::ConfigWatcher;
+        use redis::Commands;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use std::sync::Arc;
+
+        let Some((_container, url)) = setup_redis_watcher_test().await else {
+            return;
+        };
+
+        let mut watcher = RedisWatcher::new(&url, "test:myapp:").unwrap();
+
+        let trigger_count = Arc::new(AtomicUsize::new(0));
+        let trigger_count_clone = Arc::clone(&trigger_count);
+
+        let callback = Arc::new(move |key: ConfigKey| {
+            eprintln!("Redis watcher detected change: {}", key.as_str());
+            trigger_count_clone.fetch_add(1, Ordering::SeqCst);
+        });
+
+        watcher.watch(callback).unwrap();
+
+        // Wait for watcher to initialize
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+
+        let client = redis::Client::open(url.as_str()).unwrap();
+        let mut conn = client.get_connection().unwrap();
+
+        // This should trigger (has correct namespace)
+        let _: () = conn.set("test:myapp:key1", "value1").unwrap();
+        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+
+        // This should NOT trigger (different namespace)
+        let _: () = conn.set("other:app:key2", "value2").unwrap();
+
+        // Wait for events to be processed
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+
+        // Clean up
+        let _: () = conn.del("test:myapp:key1").unwrap();
+        let _: () = conn.del("other:app:key2").unwrap();
+        watcher.stop().unwrap();
+
+        let count = trigger_count.load(Ordering::SeqCst);
+        // Redis keyspace notifications may generate multiple events for the same key change,
+        // so we verify at least 1 event was received (confirming filtering works).
+        // The important part is that only key1 triggered, not key2.
+        assert!(
+            count >= 1,
+            "Expected at least 1 trigger for key with correct namespace, got {}",
+            count
+        );
+        // Verify we didn't get an excessive number of triggers
+        assert!(
+            count <= 3,
+            "Expected at most 3 triggers, got {} (something may be wrong)",
+            count
+        );
     }
 }

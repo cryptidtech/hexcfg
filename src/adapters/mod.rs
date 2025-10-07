@@ -30,5 +30,11 @@ pub use etcd::EtcdAdapter;
 pub use redis::{RedisAdapter, RedisStorageMode};
 #[cfg(feature = "reload")]
 pub use watchers::FileWatcher;
+
+#[cfg(feature = "etcd")]
+pub use watchers::EtcdWatcher;
+
+#[cfg(feature = "redis")]
+pub use watchers::RedisWatcher;
 #[cfg(feature = "yaml")]
 pub use yaml_file::{YamlFileAdapter, YamlParser};

@@ -22,9 +22,7 @@ fn main() -> Result<()> {
     println!("=== String Convenience Methods Example ===\n");
 
     // Create a configuration service
-    let service = DefaultConfigService::builder()
-        .with_env_vars()
-        .build()?;
+    let service = DefaultConfigService::builder().with_env_vars().build()?;
 
     println!("Demonstrating the difference between regular and convenience methods:\n");
 
@@ -61,7 +59,10 @@ fn main() -> Result<()> {
     // get_or_default_str
     println!("\n2. get_or_default_str(\"log.level\", \"info\")");
     let log_level = service.get_or_default_str("log.level", "info");
-    println!("   Value: {} (from LOG_LEVEL or default)", log_level.as_str());
+    println!(
+        "   Value: {} (from LOG_LEVEL or default)",
+        log_level.as_str()
+    );
 
     // has_str
     println!("\n3. has_str(\"enable.cache\")");
