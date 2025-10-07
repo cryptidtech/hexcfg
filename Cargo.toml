@@ -1,10 +1,10 @@
 [package]
-name = "configuration"
+name = "hexcfg"
 version = "1.1.0"
 edition = "2021"
 authors = ["Dave Grantham <dwg@linuxprogrammer.org>"]
 license = "MIT OR Apache-2.0"
-description = "A configuration loading crate with multi-source support"
+description = "A hexagonal architecture configuration loading crate with multi-source support"
 keywords = ["config", "configuration", "yaml", "environment", "etcd"]
 categories = ["config", "development-tools"]
 

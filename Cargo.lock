@@ -373,29 +373,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "configuration"
-version = "1.1.0"
-dependencies = [
- "clap",
- "directories",
- "etcd-client",
- "notify",
- "once_cell",
- "proptest",
- "redis",
- "serde",
- "serde_yaml",
- "tempfile",
- "testcontainers 0.23.1",
- "testcontainers-modules",
- "thiserror",
- "tokio",
- "tokio-test",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "core-foundation"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -792,6 +769,29 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+
+[[package]]
+name = "hexcfg"
+version = "1.1.0"
+dependencies = [
+ "clap",
+ "directories",
+ "etcd-client",
+ "notify",
+ "once_cell",
+ "proptest",
+ "redis",
+ "serde",
+ "serde_yaml",
+ "tempfile",
+ "testcontainers 0.23.1",
+ "testcontainers-modules",
+ "thiserror",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "tracing-subscriber",
+]
 
 [[package]]
 name = "home"
