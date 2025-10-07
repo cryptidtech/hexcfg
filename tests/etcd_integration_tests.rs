@@ -227,4 +227,160 @@ mod etcd_tests {
         assert!(keys.contains(&ConfigKey::from("key1")));
         assert!(!keys.contains(&ConfigKey::from("key2")));
     }
+
+    #[tokio::test]
+    async fn test_cli_overrides_etcd() {
+        use configuration::adapters::CommandLineAdapter;
+        use configuration::domain::ConfigurationService;
+        use configuration::service::ConfigurationServiceBuilder;
+
+        let Some((_container, etcd_adapter)) = setup_etcd_test().await else {
+            return;
+        };
+
+        // etcd has "test.key" = "test_value"
+        // CLI will override with "test.key" = "from_cli"
+        let cli_args = vec!["--test.key=from_cli"];
+        let cli_adapter = CommandLineAdapter::from_args(cli_args);
+
+        let service = ConfigurationServiceBuilder::new()
+            .with_source(Box::new(etcd_adapter))
+            .with_source(Box::new(cli_adapter))
+            .build()
+            .unwrap();
+
+        // CLI (priority 3) should win over etcd (priority 1)
+        let value = service.get_str("test.key").unwrap();
+        assert_eq!(value.as_str(), "from_cli");
+    }
+
+    #[tokio::test]
+    async fn test_env_overrides_etcd() {
+        use configuration::adapters::EnvVarAdapter;
+        use configuration::domain::ConfigurationService;
+        use configuration::service::ConfigurationServiceBuilder;
+        use std::collections::HashMap;
+
+        let Some((_container, etcd_adapter)) = setup_etcd_test().await else {
+            return;
+        };
+
+        // etcd has "test.key" = "test_value"
+        // Env will override with "test.key" = "from_env"
+        let mut env_vars = HashMap::new();
+        env_vars.insert("test.key".to_string(), "from_env".to_string());
+        let env_adapter = EnvVarAdapter::with_values(env_vars);
+
+        let service = ConfigurationServiceBuilder::new()
+            .with_source(Box::new(etcd_adapter))
+            .with_source(Box::new(env_adapter))
+            .build()
+            .unwrap();
+
+        // Env (priority 2) should win over etcd (priority 1)
+        let value = service.get_str("test.key").unwrap();
+        assert_eq!(value.as_str(), "from_env");
+    }
+
+    #[tokio::test]
+    async fn test_full_precedence_chain_with_etcd() {
+        use configuration::adapters::{CommandLineAdapter, EnvVarAdapter};
+        use configuration::domain::ConfigurationService;
+        use configuration::service::ConfigurationServiceBuilder;
+        use std::collections::HashMap;
+
+        let Some((_container, etcd_adapter)) = setup_etcd_test().await else {
+            return;
+        };
+
+        // etcd has:
+        // - "test.key" = "test_value"
+        // - "database.host" = "localhost"
+        // - "database.port" = "5432"
+
+        // Env overrides some keys
+        let mut env_vars = HashMap::new();
+        env_vars.insert("test.key".to_string(), "from_env".to_string());
+        env_vars.insert("database.host".to_string(), "env.example.com".to_string());
+        let env_adapter = EnvVarAdapter::with_values(env_vars);
+
+        // CLI overrides even more
+        let cli_args = vec!["--test.key=from_cli"];
+        let cli_adapter = CommandLineAdapter::from_args(cli_args);
+
+        let service = ConfigurationServiceBuilder::new()
+            .with_source(Box::new(etcd_adapter))
+            .with_source(Box::new(env_adapter))
+            .with_source(Box::new(cli_adapter))
+            .build()
+            .unwrap();
+
+        // test.key: CLI wins (priority 3)
+        let value = service.get_str("test.key").unwrap();
+        assert_eq!(value.as_str(), "from_cli");
+
+        // database.host: Env wins (priority 2)
+        let value = service.get_str("database.host").unwrap();
+        assert_eq!(value.as_str(), "env.example.com");
+
+        // database.port: etcd is the only source (priority 1)
+        let value = service.get_str("database.port").unwrap();
+        assert_eq!(value.as_str(), "5432");
+    }
+
+    #[tokio::test]
+    async fn test_etcd_with_custom_priority_overrides_env() {
+        use configuration::adapters::EnvVarAdapter;
+        use configuration::domain::ConfigurationService;
+        use configuration::service::ConfigurationServiceBuilder;
+        use std::collections::HashMap;
+
+        if !docker_helpers::is_docker_available() {
+            docker_helpers::print_docker_unavailable_warning("etcd custom priority precedence test");
+            return;
+        }
+
+        let etcd_image = GenericImage::new("quay.io/coreos/etcd", "v3.5.0")
+            .with_exposed_port(2379.into())
+            .with_wait_for(WaitFor::message_on_stderr("ready to serve client requests"))
+            .with_env_var("ETCD_ADVERTISE_CLIENT_URLS", "http://0.0.0.0:2379")
+            .with_env_var("ETCD_LISTEN_CLIENT_URLS", "http://0.0.0.0:2379");
+
+        let container = etcd_image.start().await.unwrap();
+        let port = container.get_host_port_ipv4(2379).await.unwrap();
+        let endpoint = format!("127.0.0.1:{}", port);
+
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+
+        // Set up etcd with test data
+        let client = etcd_client::Client::connect([&endpoint], None)
+            .await
+            .unwrap();
+        let mut client_clone = client.clone();
+
+        client_clone
+            .put("special.key", "from_etcd", None)
+            .await
+            .unwrap();
+
+        // Create etcd adapter with custom priority 3 (same as CLI!)
+        let etcd_adapter = EtcdAdapter::with_priority(vec![endpoint], None, 3)
+            .await
+            .unwrap();
+
+        // Create env adapter with normal priority 2
+        let mut env_vars = HashMap::new();
+        env_vars.insert("special.key".to_string(), "from_env".to_string());
+        let env_adapter = EnvVarAdapter::with_values(env_vars);
+
+        let service = ConfigurationServiceBuilder::new()
+            .with_source(Box::new(env_adapter))
+            .with_source(Box::new(etcd_adapter))
+            .build()
+            .unwrap();
+
+        // etcd with priority 3 should win over env with priority 2
+        let value = service.get_str("special.key").unwrap();
+        assert_eq!(value.as_str(), "from_etcd");
+    }
 }

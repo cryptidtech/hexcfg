@@ -11,6 +11,10 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+/// Maximum allowed file size for YAML configuration files (10MB)
+/// This prevents denial of service attacks via extremely large files
+const MAX_YAML_FILE_SIZE: u64 = 10 * 1024 * 1024;
+
 /// YAML parser implementation.
 ///
 /// This parser converts YAML files into flat key-value maps using dot notation
@@ -149,16 +153,58 @@ impl YamlFileAdapter {
         let file_path = path.as_ref().to_path_buf();
         let parser = YamlParser::new();
 
-        let content = fs::read_to_string(&file_path).map_err(|e| ConfigError::SourceError {
+        // Canonicalize path to prevent directory traversal attacks
+        let canonical_path = file_path.canonicalize().map_err(|e| ConfigError::SourceError {
             source_name: "yaml-file".to_string(),
-            message: format!("Failed to read file: {}", file_path.display()),
+            message: format!(
+                "Invalid or inaccessible path: {}",
+                file_path.file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("<unknown>")
+            ),
+            source: Some(Box::new(e)),
+        })?;
+
+        // Check file size before reading to prevent DoS via large files
+        let metadata = fs::metadata(&canonical_path).map_err(|e| ConfigError::SourceError {
+            source_name: "yaml-file".to_string(),
+            message: format!(
+                "Failed to read file metadata: {}",
+                canonical_path.file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("<unknown>")
+            ),
+            source: Some(Box::new(e)),
+        })?;
+
+        if metadata.len() > MAX_YAML_FILE_SIZE {
+            return Err(ConfigError::SourceError {
+                source_name: "yaml-file".to_string(),
+                message: format!(
+                    "Configuration file too large: {} bytes (max {} bytes)",
+                    metadata.len(),
+                    MAX_YAML_FILE_SIZE
+                ),
+                source: None,
+            });
+        }
+
+        // Read file content
+        let content = fs::read_to_string(&canonical_path).map_err(|e| ConfigError::SourceError {
+            source_name: "yaml-file".to_string(),
+            message: format!(
+                "Failed to read configuration file: {}",
+                canonical_path.file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("<unknown>")
+            ),
             source: Some(Box::new(e)),
         })?;
 
         let values = parser.parse(&content)?;
 
         Ok(Self {
-            file_path,
+            file_path: canonical_path,
             values,
             parser,
         })
@@ -255,10 +301,39 @@ impl ConfigSource for YamlFileAdapter {
     }
 
     fn reload(&mut self) -> Result<()> {
+        // Check file size before reading
+        let metadata = fs::metadata(&self.file_path).map_err(|e| ConfigError::SourceError {
+            source_name: "yaml-file".to_string(),
+            message: format!(
+                "Failed to read file metadata: {}",
+                self.file_path.file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("<unknown>")
+            ),
+            source: Some(Box::new(e)),
+        })?;
+
+        if metadata.len() > MAX_YAML_FILE_SIZE {
+            return Err(ConfigError::SourceError {
+                source_name: "yaml-file".to_string(),
+                message: format!(
+                    "Configuration file too large: {} bytes (max {} bytes)",
+                    metadata.len(),
+                    MAX_YAML_FILE_SIZE
+                ),
+                source: None,
+            });
+        }
+
         let content =
             fs::read_to_string(&self.file_path).map_err(|e| ConfigError::SourceError {
                 source_name: "yaml-file".to_string(),
-                message: format!("Failed to read file: {}", self.file_path.display()),
+                message: format!(
+                    "Failed to read configuration file: {}",
+                    self.file_path.file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("<unknown>")
+                ),
                 source: Some(Box::new(e)),
             })?;
 

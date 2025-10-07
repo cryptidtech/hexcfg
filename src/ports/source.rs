@@ -216,6 +216,49 @@ pub trait ConfigSource: Send + Sync {
     /// source.reload().unwrap();
     /// ```
     fn reload(&mut self) -> Result<()>;
+
+    /// Retrieves a configuration value for the given key string.
+    ///
+    /// This is a convenience method that automatically converts a string slice
+    /// into a `ConfigKey`. It's equivalent to calling `get(&ConfigKey::from(key))`.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The configuration key as a string slice
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Some(ConfigValue))` - The value was found
+    /// * `Ok(None)` - The key does not exist in this source
+    /// * `Err(ConfigError)` - An error occurred
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use configuration::ports::ConfigSource;
+    /// # use configuration::domain::{ConfigKey, ConfigValue, Result};
+    /// # struct MySource;
+    /// # impl ConfigSource for MySource {
+    /// #     fn name(&self) -> &str { "my-source" }
+    /// #     fn priority(&self) -> u8 { 1 }
+    /// #     fn get(&self, key: &ConfigKey) -> Result<Option<ConfigValue>> {
+    /// #         if key.as_str() == "app.name" {
+    /// #             Ok(Some(ConfigValue::from("MyApp")))
+    /// #         } else {
+    /// #             Ok(None)
+    /// #         }
+    /// #     }
+    /// #     fn all_keys(&self) -> Result<Vec<ConfigKey>> { Ok(vec![]) }
+    /// #     fn reload(&mut self) -> Result<()> { Ok(()) }
+    /// # }
+    /// let source = MySource;
+    /// // No need to create a ConfigKey manually!
+    /// let value = source.get_str("app.name").unwrap();
+    /// assert!(value.is_some());
+    /// ```
+    fn get_str(&self, key: &str) -> Result<Option<ConfigValue>> {
+        self.get(&ConfigKey::from(key))
+    }
 }
 
 #[cfg(test)]

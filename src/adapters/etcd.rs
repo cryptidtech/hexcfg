@@ -7,9 +7,15 @@
 use crate::domain::{ConfigError, ConfigKey, ConfigValue, Result};
 use crate::ports::ConfigSource;
 use etcd_client::{Client, GetOptions};
+use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
+
+/// Shared runtime for reload operations to avoid expensive runtime creation on every reload
+static RELOAD_RUNTIME: Lazy<tokio::runtime::Runtime> = Lazy::new(|| {
+    tokio::runtime::Runtime::new().expect("Failed to create reload runtime for etcd adapter")
+});
 
 /// Configuration source adapter for etcd.
 ///
@@ -60,6 +66,19 @@ impl fmt::Debug for EtcdAdapter {
 }
 
 impl EtcdAdapter {
+    /// Validates prefix to prevent injection attacks
+    fn validate_prefix(prefix: &str) -> Result<()> {
+        // Disallow characters that could cause issues in etcd keys
+        if prefix.contains(['\0', '\n', '\r']) {
+            return Err(ConfigError::SourceError {
+                source_name: "etcd".to_string(),
+                message: "Prefix contains invalid characters".to_string(),
+                source: None,
+            });
+        }
+        Ok(())
+    }
+
     /// Creates a new etcd adapter with the given endpoints.
     ///
     /// # Arguments
@@ -80,6 +99,11 @@ impl EtcdAdapter {
     /// # }
     /// ```
     pub async fn new<S: AsRef<str>>(endpoints: Vec<S>, prefix: Option<&str>) -> Result<Self> {
+        // Validate prefix if provided
+        if let Some(p) = prefix {
+            Self::validate_prefix(p)?;
+        }
+
         let endpoints: Vec<String> = endpoints.iter().map(|s| s.as_ref().to_string()).collect();
 
         let client =
@@ -178,24 +202,19 @@ impl EtcdAdapter {
 
     /// Reloads all keys from etcd synchronously.
     ///
-    /// Note: This method creates a temporary runtime to perform async operations.
+    /// Note: This method uses a shared runtime to perform async operations efficiently.
     /// If called from an async context, it will spawn a separate thread to avoid blocking.
     fn reload_sync(&mut self) -> Result<()> {
         let endpoints = self.endpoints.clone();
         let prefix = self.prefix.clone();
 
-        // Try to use the current runtime if available, otherwise create a new one
+        // Try to use the current runtime if available, otherwise use the shared runtime
         let new_cache = if tokio::runtime::Handle::try_current().is_ok() {
-            // We're in an async context, need to spawn a separate thread with its own runtime
+            // We're in an async context, need to spawn a separate thread with the shared runtime
             // to avoid blocking the current runtime's executor
             let handle = std::thread::spawn(move || {
-                let runtime = tokio::runtime::Runtime::new().map_err(|e| ConfigError::SourceError {
-                    source_name: "etcd".to_string(),
-                    message: "Failed to create tokio runtime".to_string(),
-                    source: Some(Box::new(e)),
-                })?;
 
-                runtime.block_on(async move {
+                RELOAD_RUNTIME.block_on(async move {
                     let prefix_str = prefix.as_deref().unwrap_or("");
 
                     // Connect fresh to etcd
@@ -246,14 +265,8 @@ impl EtcdAdapter {
                     source: None,
                 })?
         } else {
-            // No runtime available, create a temporary one
-            let runtime = tokio::runtime::Runtime::new().map_err(|e| ConfigError::SourceError {
-                source_name: "etcd".to_string(),
-                message: "Failed to create tokio runtime".to_string(),
-                source: Some(Box::new(e)),
-            })?;
-
-            runtime.block_on(async move {
+            // No runtime available, use the shared runtime
+            RELOAD_RUNTIME.block_on(async move {
                 let prefix_str = prefix.as_deref().unwrap_or("");
 
                 // Connect fresh to etcd

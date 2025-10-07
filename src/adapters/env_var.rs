@@ -9,6 +9,13 @@ use crate::domain::{ConfigKey, ConfigValue, Result};
 use crate::ports::ConfigSource;
 use std::collections::HashMap;
 use std::env;
+use std::sync::RwLock;
+
+/// Maximum length for environment variable keys (prevents DoS)
+const MAX_ENV_KEY_LEN: usize = 512;
+
+/// Maximum length for environment variable values (prevents DoS)
+const MAX_ENV_VALUE_LEN: usize = 1048576; // 1MB
 
 /// Configuration source adapter for environment variables.
 ///
@@ -33,7 +40,7 @@ use std::env;
 /// // Read only variables with a specific prefix
 /// let adapter = EnvVarAdapter::with_prefix("APP_");
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct EnvVarAdapter {
     /// Optional prefix to filter environment variables
     prefix: Option<String>,
@@ -41,8 +48,8 @@ pub struct EnvVarAdapter {
     lowercase_keys: bool,
     /// Whether to replace underscores with dots
     replace_underscores: bool,
-    /// Cached environment variables
-    cache: HashMap<String, String>,
+    /// Cached environment variables with interior mutability for thread-safe lazy loading
+    cache: RwLock<Option<HashMap<String, String>>>,
 }
 
 impl EnvVarAdapter {
@@ -62,7 +69,7 @@ impl EnvVarAdapter {
             prefix: None,
             lowercase_keys: false,
             replace_underscores: true,
-            cache: HashMap::new(),
+            cache: RwLock::new(None),
         }
     }
 
@@ -87,7 +94,7 @@ impl EnvVarAdapter {
             prefix: Some(prefix.into()),
             lowercase_keys: false,
             replace_underscores: true,
-            cache: HashMap::new(),
+            cache: RwLock::new(None),
         }
     }
 
@@ -156,21 +163,37 @@ impl EnvVarAdapter {
             prefix: None,
             lowercase_keys: false,
             replace_underscores: false,
-            cache: values,
+            cache: RwLock::new(Some(values)),
         }
     }
 
-    /// Loads environment variables into the cache.
-    fn load(&mut self) {
-        self.cache.clear();
+    /// Loads environment variables into a new HashMap.
+    fn load(&self) -> HashMap<String, String> {
+        let mut cache = HashMap::new();
 
         for (key, value) in env::vars() {
+            // Validate input sizes to prevent DoS
+            if key.len() > MAX_ENV_KEY_LEN || value.len() > MAX_ENV_VALUE_LEN {
+                tracing::debug!(
+                    "Skipping oversized environment variable: key_len={}, value_len={} (max key={}, max value={})",
+                    key.len(),
+                    value.len(),
+                    MAX_ENV_KEY_LEN,
+                    MAX_ENV_VALUE_LEN
+                );
+                continue;
+            }
+
             // Apply prefix filtering
             let key = if let Some(prefix) = &self.prefix {
                 if !key.starts_with(prefix) {
                     continue;
                 }
-                key.strip_prefix(prefix).unwrap().to_string()
+                // Strip prefix - this is safe because we just checked starts_with
+                match key.strip_prefix(prefix) {
+                    Some(stripped) => stripped.to_string(),
+                    None => continue, // Should never happen, but skip if it does
+                }
             } else {
                 key
             };
@@ -184,16 +207,40 @@ impl EnvVarAdapter {
                 transformed_key = transformed_key.replace('_', ".");
             }
 
-            self.cache.insert(transformed_key, value);
+            cache.insert(transformed_key, value);
         }
+
+        tracing::debug!(
+            "Loaded {} environment variables (prefix={:?}, lowercase={}, replace_underscores={})",
+            cache.len(),
+            self.prefix,
+            self.lowercase_keys,
+            self.replace_underscores
+        );
+
+        cache
     }
 
-    /// Gets the cache, loading it if necessary.
-    fn get_cache(&mut self) -> &HashMap<String, String> {
-        if self.cache.is_empty() {
-            self.load();
+    /// Gets the cache, loading it if necessary. Uses interior mutability for thread-safe lazy loading.
+    fn get_cache(&self) -> HashMap<String, String> {
+        // Try to read from cache first
+        {
+            let cache_guard = self.cache.read().unwrap();
+            if let Some(cache) = cache_guard.as_ref() {
+                return cache.clone();
+            }
         }
-        &self.cache
+
+        // Cache miss - need to load
+        let new_cache = self.load();
+
+        // Write to cache
+        {
+            let mut cache_guard = self.cache.write().unwrap();
+            *cache_guard = Some(new_cache.clone());
+        }
+
+        new_cache
     }
 }
 
@@ -213,9 +260,7 @@ impl ConfigSource for EnvVarAdapter {
     }
 
     fn get(&self, key: &ConfigKey) -> Result<Option<ConfigValue>> {
-        // We need to make a mutable copy to use get_cache
-        let mut adapter = self.clone();
-        let cache = adapter.get_cache();
+        let cache = self.get_cache();
 
         Ok(cache
             .get(key.as_str())
@@ -223,15 +268,15 @@ impl ConfigSource for EnvVarAdapter {
     }
 
     fn all_keys(&self) -> Result<Vec<ConfigKey>> {
-        // We need to make a mutable copy to use get_cache
-        let mut adapter = self.clone();
-        let cache = adapter.get_cache();
+        let cache = self.get_cache();
 
         Ok(cache.keys().map(|k| ConfigKey::from(k.as_str())).collect())
     }
 
     fn reload(&mut self) -> Result<()> {
-        self.load();
+        // Clear cache to force reload on next access
+        let mut cache_guard = self.cache.write().unwrap();
+        *cache_guard = None;
         Ok(())
     }
 }

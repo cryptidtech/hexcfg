@@ -86,6 +86,46 @@ pub trait ConfigurationService {
     /// ```
     fn get(&self, key: &ConfigKey) -> Result<ConfigValue>;
 
+    /// Retrieves a configuration value for the given key string.
+    ///
+    /// This is a convenience method that automatically converts a string slice
+    /// into a `ConfigKey`. It's equivalent to calling `get(&ConfigKey::from(key))`.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The configuration key as a string slice
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(ConfigValue)` - The configuration value
+    /// * `Err(ConfigError)` - The key was not found or an error occurred
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use configuration::domain::{ConfigurationService, ConfigKey, ConfigValue, Result};
+    /// # use configuration::ports::ConfigWatcher;
+    /// # struct MyConfigService;
+    /// # impl ConfigurationService for MyConfigService {
+    /// #     fn get(&self, key: &ConfigKey) -> Result<ConfigValue> {
+    /// #         Ok(ConfigValue::from("localhost"))
+    /// #     }
+    /// #     fn get_or_default(&self, key: &ConfigKey, default: &str) -> ConfigValue {
+    /// #         self.get(key).unwrap_or_else(|_| ConfigValue::from(default))
+    /// #     }
+    /// #     fn has(&self, key: &ConfigKey) -> bool { self.get(key).is_ok() }
+    /// #     fn reload(&mut self) -> Result<()> { Ok(()) }
+    /// #     fn register_watcher(&mut self, watcher: Box<dyn ConfigWatcher>) -> Result<()> { Ok(()) }
+    /// # }
+    /// let service = MyConfigService;
+    /// // No need to create a ConfigKey manually!
+    /// let value = service.get_str("database.host").unwrap();
+    /// assert_eq!(value.as_str(), "localhost");
+    /// ```
+    fn get_str(&self, key: &str) -> Result<ConfigValue> {
+        self.get(&ConfigKey::from(key))
+    }
+
     /// Retrieves a configuration value or returns a default value if not found.
     ///
     /// This is a convenience method that returns a default value instead of an error
@@ -126,6 +166,48 @@ pub trait ConfigurationService {
     /// ```
     fn get_or_default(&self, key: &ConfigKey, default: &str) -> ConfigValue;
 
+    /// Retrieves a configuration value or returns a default value if not found (string version).
+    ///
+    /// This is a convenience method that automatically converts a string slice
+    /// into a `ConfigKey`. It's equivalent to calling `get_or_default(&ConfigKey::from(key), default)`.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The configuration key as a string slice
+    /// * `default` - The default value to return if the key is not found
+    ///
+    /// # Returns
+    ///
+    /// The configuration value or the default value
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use configuration::domain::{ConfigurationService, ConfigKey, ConfigValue, Result, ConfigError};
+    /// # use configuration::ports::ConfigWatcher;
+    /// # struct MyConfigService;
+    /// # impl ConfigurationService for MyConfigService {
+    /// #     fn get(&self, key: &ConfigKey) -> Result<ConfigValue> {
+    /// #         Err(ConfigError::ConfigKeyNotFound {
+    /// #             key: key.as_str().to_string(),
+    /// #         })
+    /// #     }
+    /// #     fn get_or_default(&self, key: &ConfigKey, default: &str) -> ConfigValue {
+    /// #         self.get(key).unwrap_or_else(|_| ConfigValue::from(default))
+    /// #     }
+    /// #     fn has(&self, key: &ConfigKey) -> bool { false }
+    /// #     fn reload(&mut self) -> Result<()> { Ok(()) }
+    /// #     fn register_watcher(&mut self, watcher: Box<dyn ConfigWatcher>) -> Result<()> { Ok(()) }
+    /// # }
+    /// let service = MyConfigService;
+    /// // No need to create a ConfigKey manually!
+    /// let value = service.get_or_default_str("nonexistent.key", "default_value");
+    /// assert_eq!(value.as_str(), "default_value");
+    /// ```
+    fn get_or_default_str(&self, key: &str, default: &str) -> ConfigValue {
+        self.get_or_default(&ConfigKey::from(key), default)
+    }
+
     /// Checks if a configuration key exists in any source.
     ///
     /// This method is useful for checking whether a configuration value is available
@@ -161,6 +243,44 @@ pub trait ConfigurationService {
     /// assert!(service.has(&key));
     /// ```
     fn has(&self, key: &ConfigKey) -> bool;
+
+    /// Checks if a configuration key exists in any source (string version).
+    ///
+    /// This is a convenience method that automatically converts a string slice
+    /// into a `ConfigKey`. It's equivalent to calling `has(&ConfigKey::from(key))`.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The configuration key as a string slice
+    ///
+    /// # Returns
+    ///
+    /// `true` if the key exists in any source, `false` otherwise
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use configuration::domain::{ConfigurationService, ConfigKey, ConfigValue, Result};
+    /// # use configuration::ports::ConfigWatcher;
+    /// # struct MyConfigService;
+    /// # impl ConfigurationService for MyConfigService {
+    /// #     fn get(&self, key: &ConfigKey) -> Result<ConfigValue> {
+    /// #         Ok(ConfigValue::from("value"))
+    /// #     }
+    /// #     fn get_or_default(&self, key: &ConfigKey, default: &str) -> ConfigValue {
+    /// #         self.get(key).unwrap_or_else(|_| ConfigValue::from(default))
+    /// #     }
+    /// #     fn has(&self, key: &ConfigKey) -> bool { true }
+    /// #     fn reload(&mut self) -> Result<()> { Ok(()) }
+    /// #     fn register_watcher(&mut self, watcher: Box<dyn ConfigWatcher>) -> Result<()> { Ok(()) }
+    /// # }
+    /// let service = MyConfigService;
+    /// // No need to create a ConfigKey manually!
+    /// assert!(service.has_str("app.name"));
+    /// ```
+    fn has_str(&self, key: &str) -> bool {
+        self.has(&ConfigKey::from(key))
+    }
 
     /// Reloads configuration from all sources.
     ///

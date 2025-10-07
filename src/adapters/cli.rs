@@ -9,6 +9,12 @@ use crate::domain::{ConfigKey, ConfigValue, Result};
 use crate::ports::ConfigSource;
 use std::collections::HashMap;
 
+/// Maximum length for command-line argument keys (prevents DoS)
+const MAX_ARG_KEY_LEN: usize = 256;
+
+/// Maximum length for command-line argument values (prevents DoS)
+const MAX_ARG_VALUE_LEN: usize = 65536; // 64KB
+
 /// Configuration source adapter for command-line arguments.
 ///
 /// This adapter reads configuration values from command-line arguments. It supports
@@ -100,19 +106,28 @@ impl CommandLineAdapter {
             // Handle --key=value format
             if arg.starts_with("--") && arg.contains('=') {
                 if let Some((key, value)) = arg.strip_prefix("--").and_then(|s| s.split_once('=')) {
-                    self.values.insert(key.to_string(), value.to_string());
+                    // Validate input sizes to prevent DoS
+                    if key.len() <= MAX_ARG_KEY_LEN && value.len() <= MAX_ARG_VALUE_LEN {
+                        self.values.insert(key.to_string(), value.to_string());
+                    }
                 }
                 i += 1;
             }
             // Handle --key value format
             else if arg.starts_with("--") {
-                let key = arg.strip_prefix("--").unwrap();
-                if i + 1 < args.len() {
-                    let next_arg = args[i + 1].as_ref();
-                    // Make sure the next argument is not another flag
-                    if !next_arg.starts_with('-') {
-                        self.values.insert(key.to_string(), next_arg.to_string());
-                        i += 2;
+                if let Some(key) = arg.strip_prefix("--") {
+                    if i + 1 < args.len() {
+                        let next_arg = args[i + 1].as_ref();
+                        // Make sure the next argument is not another flag
+                        if !next_arg.starts_with('-') {
+                            // Validate input sizes to prevent DoS
+                            if key.len() <= MAX_ARG_KEY_LEN && next_arg.len() <= MAX_ARG_VALUE_LEN {
+                                self.values.insert(key.to_string(), next_arg.to_string());
+                            }
+                            i += 2;
+                        } else {
+                            i += 1;
+                        }
                     } else {
                         i += 1;
                     }
@@ -122,13 +137,19 @@ impl CommandLineAdapter {
             }
             // Handle -k value format (single character short form)
             else if arg.starts_with('-') && arg.len() == 2 {
-                let key = arg.strip_prefix('-').unwrap();
-                if i + 1 < args.len() {
-                    let next_arg = args[i + 1].as_ref();
-                    // Make sure the next argument is not another flag
-                    if !next_arg.starts_with('-') {
-                        self.values.insert(key.to_string(), next_arg.to_string());
-                        i += 2;
+                if let Some(key) = arg.strip_prefix('-') {
+                    if i + 1 < args.len() {
+                        let next_arg = args[i + 1].as_ref();
+                        // Make sure the next argument is not another flag
+                        if !next_arg.starts_with('-') {
+                            // Validate input sizes to prevent DoS
+                            if key.len() <= MAX_ARG_KEY_LEN && next_arg.len() <= MAX_ARG_VALUE_LEN {
+                                self.values.insert(key.to_string(), next_arg.to_string());
+                            }
+                            i += 2;
+                        } else {
+                            i += 1;
+                        }
                     } else {
                         i += 1;
                     }

@@ -36,18 +36,47 @@
 //!
 //! # Quick Start
 //!
-//! ```rust,no_run
+//! ```rust
 //! use configuration::prelude::*;
 //!
-//! # fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
-//! // Configuration service will be available in later phases
+//! # fn main() -> Result<()> {
+//! // Create a configuration service with environment variables
+//! let service = DefaultConfigService::builder()
+//!     .with_env_vars()
+//!     .build()?;
+//!
+//! // Get a configuration value (using convenient string slice methods)
+//! let value = service.get_or_default_str("app.name", "MyApp");
+//! println!("Application name: {}", value.as_str());
+//!
+//! // Type-safe conversions
+//! if let Ok(port_value) = service.get_str("app.port") {
+//!     let port: i32 = port_value.as_i32("app.port").unwrap_or(8080);
+//!     println!("Port: {}", port);
+//! }
+//!
+//! // Check if a key exists
+//! if service.has_str("app.debug") {
+//!     println!("Debug mode configured");
+//! }
 //! # Ok(())
 //! # }
 //! ```
 //!
+//! # Convenience Methods
+//!
+//! For ergonomic usage, the crate provides `_str` variants that accept string slices:
+//! - [`ConfigurationService::get_str`](domain::ConfigurationService::get_str)
+//! - [`ConfigurationService::get_or_default_str`](domain::ConfigurationService::get_or_default_str)
+//! - [`ConfigurationService::has_str`](domain::ConfigurationService::has_str)
+//! - [`ConfigSource::get_str`](ports::ConfigSource::get_str)
+//!
 //! # Examples
 //!
-//! More detailed examples will be added as the implementation progresses.
+//! See the `examples/` directory for comprehensive examples:
+//! - `basic_usage.rs` - Getting started with environment variables
+//! - `multi_source.rs` - Using multiple configuration sources with precedence
+//! - `dynamic_reload.rs` - Dynamic configuration reloading with file watching
 
 #![deny(missing_docs)]
 #![deny(rustdoc::broken_intra_doc_links)]

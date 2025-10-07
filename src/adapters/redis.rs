@@ -6,10 +6,16 @@
 
 use crate::domain::{ConfigError, ConfigKey, ConfigValue, Result};
 use crate::ports::ConfigSource;
+use once_cell::sync::Lazy;
 use redis::aio::MultiplexedConnection;
 use redis::{AsyncCommands, Client};
 use std::collections::HashMap;
 use std::sync::Arc;
+
+/// Shared runtime for reload operations to avoid expensive runtime creation on every reload
+static RELOAD_RUNTIME: Lazy<tokio::runtime::Runtime> = Lazy::new(|| {
+    tokio::runtime::Runtime::new().expect("Failed to create reload runtime for Redis adapter")
+});
 
 /// Storage mode for Redis configuration.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -70,6 +76,19 @@ pub struct RedisAdapter {
 }
 
 impl RedisAdapter {
+    /// Validates namespace to prevent injection attacks
+    fn validate_namespace(namespace: &str) -> Result<()> {
+        // Disallow wildcard characters and other special Redis pattern characters
+        if namespace.contains(['*', '?', '[', ']', '\\']) {
+            return Err(ConfigError::SourceError {
+                source_name: "redis".to_string(),
+                message: "Namespace contains invalid characters (* ? [ ] \\)".to_string(),
+                source: None,
+            });
+        }
+        Ok(())
+    }
+
     /// Creates a new Redis adapter with the given connection URL.
     ///
     /// # Arguments
@@ -94,6 +113,9 @@ impl RedisAdapter {
     /// # }
     /// ```
     pub async fn new(url: &str, namespace: &str, storage_mode: RedisStorageMode) -> Result<Self> {
+        // Validate namespace to prevent injection attacks
+        Self::validate_namespace(namespace)?;
+
         let client = Client::open(url).map_err(|e| ConfigError::SourceError {
             source_name: "redis".to_string(),
             message: format!("Failed to create Redis client: {}", e),
@@ -183,19 +205,35 @@ impl RedisAdapter {
                 self.cache = hash;
             }
             RedisStorageMode::StringKeys => {
-                // Scan for keys with prefix
+                // Use SCAN instead of KEYS to avoid blocking the Redis server
                 let pattern = format!("{}*", self.namespace);
-                let keys: Vec<String> =
-                    conn.keys(&pattern)
+                let mut cursor: u64 = 0;
+                let mut all_keys = Vec::new();
+
+                loop {
+                    let (new_cursor, keys): (u64, Vec<String>) = redis::cmd("SCAN")
+                        .arg(cursor)
+                        .arg("MATCH")
+                        .arg(&pattern)
+                        .arg("COUNT")
+                        .arg(100)
+                        .query_async(&mut conn)
                         .await
                         .map_err(|e| ConfigError::SourceError {
                             source_name: "redis".to_string(),
-                            message: format!("Failed to fetch keys from Redis: {}", e),
+                            message: format!("Failed to scan keys from Redis: {}", e),
                             source: Some(Box::new(e)),
                         })?;
 
+                    all_keys.extend(keys);
+                    cursor = new_cursor;
+                    if cursor == 0 {
+                        break;
+                    }
+                }
+
                 // Fetch all values
-                for key in keys {
+                for key in all_keys {
                     let value: String =
                         conn.get(&key).await.map_err(|e| ConfigError::SourceError {
                             source_name: "redis".to_string(),
@@ -220,25 +258,20 @@ impl RedisAdapter {
 
     /// Reloads all keys from Redis synchronously.
     ///
-    /// Note: This method creates a temporary runtime to perform async operations.
+    /// Note: This method uses a shared runtime to perform async operations efficiently.
     /// If called from an async context, it will spawn a separate thread to avoid blocking.
     fn reload_sync(&mut self) -> Result<()> {
         let client = Arc::clone(&self.client);
         let namespace = self.namespace.clone();
         let storage_mode = self.storage_mode;
 
-        // Try to use the current runtime if available, otherwise create a new one
+        // Try to use the current runtime if available, otherwise use the shared runtime
         let new_cache = if tokio::runtime::Handle::try_current().is_ok() {
-            // We're in an async context, need to spawn a separate thread with its own runtime
+            // We're in an async context, need to spawn a separate thread with the shared runtime
             // to avoid blocking the current runtime's executor
             let handle = std::thread::spawn(move || {
-                let runtime = tokio::runtime::Runtime::new().map_err(|e| ConfigError::SourceError {
-                    source_name: "redis".to_string(),
-                    message: "Failed to create tokio runtime".to_string(),
-                    source: Some(Box::new(e)),
-                })?;
 
-                runtime.block_on(async move {
+                RELOAD_RUNTIME.block_on(async move {
                     let mut conn = client
                         .get_multiplexed_async_connection()
                         .await
@@ -265,19 +298,35 @@ impl RedisAdapter {
                             new_cache = hash;
                         }
                         RedisStorageMode::StringKeys => {
-                            // Scan for keys with prefix
+                            // Use SCAN instead of KEYS to avoid blocking the Redis server
                             let pattern = format!("{}*", namespace);
-                            let keys: Vec<String> =
-                                conn.keys(&pattern)
+                            let mut cursor: u64 = 0;
+                            let mut all_keys = Vec::new();
+
+                            loop {
+                                let (new_cursor, keys): (u64, Vec<String>) = redis::cmd("SCAN")
+                                    .arg(cursor)
+                                    .arg("MATCH")
+                                    .arg(&pattern)
+                                    .arg("COUNT")
+                                    .arg(100)
+                                    .query_async(&mut conn)
                                     .await
                                     .map_err(|e| ConfigError::SourceError {
                                         source_name: "redis".to_string(),
-                                        message: format!("Failed to fetch keys from Redis: {}", e),
+                                        message: format!("Failed to scan keys from Redis: {}", e),
                                         source: Some(Box::new(e)),
                                     })?;
 
+                                all_keys.extend(keys);
+                                cursor = new_cursor;
+                                if cursor == 0 {
+                                    break;
+                                }
+                            }
+
                             // Fetch all values
-                            for key in keys {
+                            for key in all_keys {
                                 let value: String = conn.get(&key).await.map_err(|e| {
                                     ConfigError::SourceError {
                                         source_name: "redis".to_string(),
@@ -310,14 +359,8 @@ impl RedisAdapter {
                     source: None,
                 })?
         } else {
-            // No runtime available, create a temporary one
-            let runtime = tokio::runtime::Runtime::new().map_err(|e| ConfigError::SourceError {
-                source_name: "redis".to_string(),
-                message: "Failed to create tokio runtime".to_string(),
-                source: Some(Box::new(e)),
-            })?;
-
-            runtime.block_on(async move {
+            // No runtime available, use the shared runtime
+            RELOAD_RUNTIME.block_on(async move {
                 let mut conn = client
                     .get_multiplexed_async_connection()
                     .await
@@ -344,19 +387,35 @@ impl RedisAdapter {
                         new_cache = hash;
                     }
                     RedisStorageMode::StringKeys => {
-                        // Scan for keys with prefix
+                        // Use SCAN instead of KEYS to avoid blocking the Redis server
                         let pattern = format!("{}*", namespace);
-                        let keys: Vec<String> =
-                            conn.keys(&pattern)
+                        let mut cursor: u64 = 0;
+                        let mut all_keys = Vec::new();
+
+                        loop {
+                            let (new_cursor, keys): (u64, Vec<String>) = redis::cmd("SCAN")
+                                .arg(cursor)
+                                .arg("MATCH")
+                                .arg(&pattern)
+                                .arg("COUNT")
+                                .arg(100)
+                                .query_async(&mut conn)
                                 .await
                                 .map_err(|e| ConfigError::SourceError {
                                     source_name: "redis".to_string(),
-                                    message: format!("Failed to fetch keys from Redis: {}", e),
+                                    message: format!("Failed to scan keys from Redis: {}", e),
                                     source: Some(Box::new(e)),
                                 })?;
 
+                            all_keys.extend(keys);
+                            cursor = new_cursor;
+                            if cursor == 0 {
+                                break;
+                            }
+                        }
+
                         // Fetch all values
-                        for key in keys {
+                        for key in all_keys {
                             let value: String =
                                 conn.get(&key).await.map_err(|e| ConfigError::SourceError {
                                     source_name: "redis".to_string(),
