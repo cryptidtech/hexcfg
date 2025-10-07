@@ -2,7 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/configuration.svg)](https://crates.io/crates/configuration)
 [![Documentation](https://docs.rs/configuration/badge.svg)](https://docs.rs/configuration)
-[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE-MIT)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE-APACHE)
 
 A flexible, type-safe configuration management library for Rust applications, built with hexagonal architecture principles.
 
