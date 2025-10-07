@@ -16,7 +16,7 @@
 //! cargo run --example string_convenience --features env
 //! ```
 
-use configuration::prelude::*;
+use hexcfg::prelude::*;
 
 fn main() -> Result<()> {
     println!("=== String Convenience Methods Example ===\n");

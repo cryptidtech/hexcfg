@@ -31,8 +31,8 @@ use crate::domain::{ConfigKey, ConfigValue, Result};
 /// # Examples
 ///
 /// ```rust
-/// use configuration::ports::ConfigSource;
-/// use configuration::domain::{ConfigKey, ConfigValue, Result};
+/// use hexcfg::ports::ConfigSource;
+/// use hexcfg::domain::{ConfigKey, ConfigValue, Result};
 ///
 /// struct MySource;
 ///
@@ -68,8 +68,8 @@ pub trait ConfigSource: Send + Sync {
     /// # Examples
     ///
     /// ```rust
-    /// # use configuration::ports::ConfigSource;
-    /// # use configuration::domain::{ConfigKey, ConfigValue, Result};
+    /// # use hexcfg::ports::ConfigSource;
+    /// # use hexcfg::domain::{ConfigKey, ConfigValue, Result};
     /// # struct MySource;
     /// # impl ConfigSource for MySource {
     /// #     fn name(&self) -> &str { "my-source" }
@@ -98,8 +98,8 @@ pub trait ConfigSource: Send + Sync {
     /// # Examples
     ///
     /// ```rust
-    /// # use configuration::ports::ConfigSource;
-    /// # use configuration::domain::{ConfigKey, ConfigValue, Result};
+    /// # use hexcfg::ports::ConfigSource;
+    /// # use hexcfg::domain::{ConfigKey, ConfigValue, Result};
     /// # struct MySource;
     /// # impl ConfigSource for MySource {
     /// #     fn name(&self) -> &str { "my-source" }
@@ -131,8 +131,8 @@ pub trait ConfigSource: Send + Sync {
     /// # Examples
     ///
     /// ```rust
-    /// # use configuration::ports::ConfigSource;
-    /// # use configuration::domain::{ConfigKey, ConfigValue, Result};
+    /// # use hexcfg::ports::ConfigSource;
+    /// # use hexcfg::domain::{ConfigKey, ConfigValue, Result};
     /// # struct MySource;
     /// # impl ConfigSource for MySource {
     /// #     fn name(&self) -> &str { "my-source" }
@@ -167,8 +167,8 @@ pub trait ConfigSource: Send + Sync {
     /// # Examples
     ///
     /// ```rust
-    /// # use configuration::ports::ConfigSource;
-    /// # use configuration::domain::{ConfigKey, ConfigValue, Result};
+    /// # use hexcfg::ports::ConfigSource;
+    /// # use hexcfg::domain::{ConfigKey, ConfigValue, Result};
     /// # struct MySource;
     /// # impl ConfigSource for MySource {
     /// #     fn name(&self) -> &str { "my-source" }
@@ -199,8 +199,8 @@ pub trait ConfigSource: Send + Sync {
     /// # Examples
     ///
     /// ```rust
-    /// # use configuration::ports::ConfigSource;
-    /// # use configuration::domain::{ConfigKey, ConfigValue, Result};
+    /// # use hexcfg::ports::ConfigSource;
+    /// # use hexcfg::domain::{ConfigKey, ConfigValue, Result};
     /// # struct MySource;
     /// # impl ConfigSource for MySource {
     /// #     fn name(&self) -> &str { "my-source" }
@@ -235,8 +235,8 @@ pub trait ConfigSource: Send + Sync {
     /// # Examples
     ///
     /// ```rust
-    /// # use configuration::ports::ConfigSource;
-    /// # use configuration::domain::{ConfigKey, ConfigValue, Result};
+    /// # use hexcfg::ports::ConfigSource;
+    /// # use hexcfg::domain::{ConfigKey, ConfigValue, Result};
     /// # struct MySource;
     /// # impl ConfigSource for MySource {
     /// #     fn name(&self) -> &str { "my-source" }

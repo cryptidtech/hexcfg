@@ -19,7 +19,7 @@
 //! ```
 
 #[cfg(all(feature = "reload", feature = "yaml"))]
-use configuration::prelude::*;
+use hexcfg::prelude::*;
 #[cfg(all(feature = "reload", feature = "yaml"))]
 use std::sync::{Arc, Mutex};
 #[cfg(all(feature = "reload", feature = "yaml"))]

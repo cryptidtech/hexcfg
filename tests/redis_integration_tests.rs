@@ -6,9 +6,9 @@ mod common;
 
 #[cfg(feature = "redis")]
 mod redis_tests {
-    use configuration::adapters::{RedisAdapter, RedisStorageMode};
-    use configuration::domain::ConfigKey;
-    use configuration::ports::ConfigSource;
+    use hexcfg::adapters::{RedisAdapter, RedisStorageMode};
+    use hexcfg::domain::ConfigKey;
+    use hexcfg::ports::ConfigSource;
     use testcontainers::{core::WaitFor, runners::AsyncRunner, GenericImage, ImageExt};
 
     use crate::common as docker_helpers;
@@ -232,9 +232,9 @@ mod redis_tests {
 
     #[tokio::test]
     async fn test_cli_overrides_redis() {
-        use configuration::adapters::CommandLineAdapter;
-        use configuration::domain::ConfigurationService;
-        use configuration::service::ConfigurationServiceBuilder;
+        use hexcfg::adapters::CommandLineAdapter;
+        use hexcfg::domain::ConfigurationService;
+        use hexcfg::service::ConfigurationServiceBuilder;
 
         let Some((_container, redis_adapter)) = setup_redis_test(RedisStorageMode::Hash).await
         else {
@@ -259,9 +259,9 @@ mod redis_tests {
 
     #[tokio::test]
     async fn test_env_overrides_redis() {
-        use configuration::adapters::EnvVarAdapter;
-        use configuration::domain::ConfigurationService;
-        use configuration::service::ConfigurationServiceBuilder;
+        use hexcfg::adapters::EnvVarAdapter;
+        use hexcfg::domain::ConfigurationService;
+        use hexcfg::service::ConfigurationServiceBuilder;
         use std::collections::HashMap;
 
         let Some((_container, redis_adapter)) = setup_redis_test(RedisStorageMode::Hash).await
@@ -288,9 +288,9 @@ mod redis_tests {
 
     #[tokio::test]
     async fn test_full_precedence_chain_with_redis() {
-        use configuration::adapters::{CommandLineAdapter, EnvVarAdapter};
-        use configuration::domain::ConfigurationService;
-        use configuration::service::ConfigurationServiceBuilder;
+        use hexcfg::adapters::{CommandLineAdapter, EnvVarAdapter};
+        use hexcfg::domain::ConfigurationService;
+        use hexcfg::service::ConfigurationServiceBuilder;
         use std::collections::HashMap;
 
         let Some((_container, redis_adapter)) = setup_redis_test(RedisStorageMode::Hash).await
@@ -335,9 +335,9 @@ mod redis_tests {
 
     #[tokio::test]
     async fn test_redis_with_custom_priority_overrides_env() {
-        use configuration::adapters::EnvVarAdapter;
-        use configuration::domain::ConfigurationService;
-        use configuration::service::ConfigurationServiceBuilder;
+        use hexcfg::adapters::EnvVarAdapter;
+        use hexcfg::domain::ConfigurationService;
+        use hexcfg::service::ConfigurationServiceBuilder;
         use std::collections::HashMap;
 
         if !docker_helpers::is_docker_available() {
@@ -419,7 +419,7 @@ mod redis_tests {
 
     #[tokio::test]
     async fn test_redis_watcher_creation() {
-        use configuration::adapters::RedisWatcher;
+        use hexcfg::adapters::RedisWatcher;
 
         let Some((_container, url)) = setup_redis_watcher_test().await else {
             return;
@@ -431,7 +431,7 @@ mod redis_tests {
 
     #[tokio::test]
     async fn test_redis_watcher_invalid_url() {
-        use configuration::adapters::RedisWatcher;
+        use hexcfg::adapters::RedisWatcher;
 
         let watcher = RedisWatcher::new("redis://invalid-host:9999", "test:");
         assert!(watcher.is_err());
@@ -439,8 +439,8 @@ mod redis_tests {
 
     #[tokio::test]
     async fn test_redis_watcher_start_stop() {
-        use configuration::adapters::RedisWatcher;
-        use configuration::ports::ConfigWatcher;
+        use hexcfg::adapters::RedisWatcher;
+        use hexcfg::ports::ConfigWatcher;
         use std::sync::Arc;
 
         let Some((_container, url)) = setup_redis_watcher_test().await else {
@@ -465,8 +465,8 @@ mod redis_tests {
 
     #[tokio::test]
     async fn test_redis_watcher_callback_triggered() {
-        use configuration::adapters::RedisWatcher;
-        use configuration::ports::ConfigWatcher;
+        use hexcfg::adapters::RedisWatcher;
+        use hexcfg::ports::ConfigWatcher;
         use redis::Commands;
         use std::sync::atomic::{AtomicBool, Ordering};
         use std::sync::Arc;
@@ -511,8 +511,8 @@ mod redis_tests {
 
     #[tokio::test]
     async fn test_redis_watcher_multiple_changes() {
-        use configuration::adapters::RedisWatcher;
-        use configuration::ports::ConfigWatcher;
+        use hexcfg::adapters::RedisWatcher;
+        use hexcfg::ports::ConfigWatcher;
         use redis::Commands;
         use std::sync::atomic::{AtomicUsize, Ordering};
         use std::sync::Arc;
@@ -562,8 +562,8 @@ mod redis_tests {
 
     #[tokio::test]
     async fn test_redis_watcher_namespace_filtering() {
-        use configuration::adapters::RedisWatcher;
-        use configuration::ports::ConfigWatcher;
+        use hexcfg::adapters::RedisWatcher;
+        use hexcfg::ports::ConfigWatcher;
         use redis::Commands;
         use std::sync::atomic::{AtomicUsize, Ordering};
         use std::sync::Arc;

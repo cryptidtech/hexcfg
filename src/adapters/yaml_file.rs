@@ -23,8 +23,8 @@ const MAX_YAML_FILE_SIZE: u64 = 10 * 1024 * 1024;
 /// # Examples
 ///
 /// ```rust
-/// use configuration::adapters::YamlParser;
-/// use configuration::ports::ConfigParser;
+/// use hexcfg::adapters::YamlParser;
+/// use hexcfg::ports::ConfigParser;
 ///
 /// let parser = YamlParser::new();
 /// let yaml_content = "database:\n  host: localhost\n  port: 5432";
@@ -116,8 +116,8 @@ impl ConfigParser for YamlParser {
 /// # Examples
 ///
 /// ```rust,no_run
-/// use configuration::adapters::YamlFileAdapter;
-/// use configuration::ports::ConfigSource;
+/// use hexcfg::adapters::YamlFileAdapter;
+/// use hexcfg::ports::ConfigSource;
 ///
 /// // Load from a specific file
 /// let adapter = YamlFileAdapter::from_file("/path/to/config.yaml").unwrap();
@@ -145,7 +145,7 @@ impl YamlFileAdapter {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use configuration::adapters::YamlFileAdapter;
+    /// use hexcfg::adapters::YamlFileAdapter;
     ///
     /// let adapter = YamlFileAdapter::from_file("/etc/myapp/config.yaml").unwrap();
     /// ```
@@ -229,7 +229,7 @@ impl YamlFileAdapter {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use configuration::adapters::YamlFileAdapter;
+    /// use hexcfg::adapters::YamlFileAdapter;
     ///
     /// let adapter = YamlFileAdapter::from_default_location("myapp", "com.example").unwrap();
     /// ```
@@ -258,7 +258,7 @@ impl YamlFileAdapter {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use configuration::adapters::YamlFileAdapter;
+    /// use hexcfg::adapters::YamlFileAdapter;
     ///
     /// let adapter = YamlFileAdapter::with_filename("myapp", "com.example", "settings.yaml").unwrap();
     /// ```

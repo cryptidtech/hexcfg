@@ -30,7 +30,7 @@
 //!   --app.name=CliApp --app.port=9000
 //! ```
 
-use configuration::prelude::*;
+use hexcfg::prelude::*;
 use std::env;
 
 fn main() -> Result<()> {

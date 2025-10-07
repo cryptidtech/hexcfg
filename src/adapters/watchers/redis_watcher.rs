@@ -26,11 +26,11 @@ use std::thread::{self, JoinHandle};
 /// # Examples
 ///
 /// ```rust,no_run
-/// use configuration::adapters::RedisWatcher;
-/// use configuration::ports::ConfigWatcher;
+/// use hexcfg::adapters::RedisWatcher;
+/// use hexcfg::ports::ConfigWatcher;
 /// use std::sync::Arc;
 ///
-/// # fn main() -> configuration::domain::Result<()> {
+/// # fn main() -> hexcfg::domain::Result<()> {
 /// let mut watcher = RedisWatcher::new(
 ///     "redis://localhost:6379",
 ///     "myapp:"
@@ -71,9 +71,9 @@ impl RedisWatcher {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use configuration::adapters::RedisWatcher;
+    /// use hexcfg::adapters::RedisWatcher;
     ///
-    /// # fn main() -> configuration::domain::Result<()> {
+    /// # fn main() -> hexcfg::domain::Result<()> {
     /// let watcher = RedisWatcher::new(
     ///     "redis://localhost:6379",
     ///     "myapp:"

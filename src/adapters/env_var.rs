@@ -31,8 +31,8 @@ const MAX_ENV_VALUE_LEN: usize = 1048576; // 1MB
 /// # Examples
 ///
 /// ```rust
-/// use configuration::adapters::EnvVarAdapter;
-/// use configuration::ports::ConfigSource;
+/// use hexcfg::adapters::EnvVarAdapter;
+/// use hexcfg::ports::ConfigSource;
 ///
 /// // Read all environment variables
 /// let adapter = EnvVarAdapter::new();
@@ -60,7 +60,7 @@ impl EnvVarAdapter {
     /// # Examples
     ///
     /// ```rust
-    /// use configuration::adapters::EnvVarAdapter;
+    /// use hexcfg::adapters::EnvVarAdapter;
     ///
     /// let adapter = EnvVarAdapter::new();
     /// ```
@@ -85,7 +85,7 @@ impl EnvVarAdapter {
     /// # Examples
     ///
     /// ```rust
-    /// use configuration::adapters::EnvVarAdapter;
+    /// use hexcfg::adapters::EnvVarAdapter;
     ///
     /// let adapter = EnvVarAdapter::with_prefix("MYAPP_");
     /// ```
@@ -106,7 +106,7 @@ impl EnvVarAdapter {
     /// # Examples
     ///
     /// ```rust
-    /// use configuration::adapters::EnvVarAdapter;
+    /// use hexcfg::adapters::EnvVarAdapter;
     ///
     /// let adapter = EnvVarAdapter::new()
     ///     .lowercase_keys(true);
@@ -124,7 +124,7 @@ impl EnvVarAdapter {
     /// # Examples
     ///
     /// ```rust
-    /// use configuration::adapters::EnvVarAdapter;
+    /// use hexcfg::adapters::EnvVarAdapter;
     ///
     /// let adapter = EnvVarAdapter::new()
     ///     .replace_underscores(false);
@@ -150,7 +150,7 @@ impl EnvVarAdapter {
     /// # Examples
     ///
     /// ```rust
-    /// use configuration::adapters::EnvVarAdapter;
+    /// use hexcfg::adapters::EnvVarAdapter;
     /// use std::collections::HashMap;
     ///
     /// let mut values = HashMap::new();

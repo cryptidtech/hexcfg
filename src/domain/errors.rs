@@ -18,7 +18,7 @@ use thiserror::Error;
 /// # Examples
 ///
 /// ```
-/// use configuration::domain::errors::ConfigError;
+/// use hexcfg::domain::errors::ConfigError;
 ///
 /// fn get_config_value() -> Result<String, ConfigError> {
 ///     Err(ConfigError::ConfigKeyNotFound {

@@ -20,7 +20,7 @@
 //! cargo run --example basic_usage --features env
 //! ```
 
-use configuration::prelude::*;
+use hexcfg::prelude::*;
 
 fn main() -> Result<()> {
     // Initialize tracing subscriber for logging

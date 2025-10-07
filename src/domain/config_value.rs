@@ -20,7 +20,7 @@ use std::str::FromStr;
 /// # Examples
 ///
 /// ```
-/// use configuration::domain::config_value::ConfigValue;
+/// use hexcfg::domain::config_value::ConfigValue;
 ///
 /// let value = ConfigValue::new("42".to_string());
 /// assert_eq!(value.as_str(), "42");
@@ -35,7 +35,7 @@ impl ConfigValue {
     /// # Examples
     ///
     /// ```
-    /// use configuration::domain::config_value::ConfigValue;
+    /// use hexcfg::domain::config_value::ConfigValue;
     ///
     /// let value = ConfigValue::new("hello".to_string());
     /// assert_eq!(value.as_str(), "hello");
@@ -49,7 +49,7 @@ impl ConfigValue {
     /// # Examples
     ///
     /// ```
-    /// use configuration::domain::config_value::ConfigValue;
+    /// use hexcfg::domain::config_value::ConfigValue;
     ///
     /// let value = ConfigValue::from("world");
     /// assert_eq!(value.as_str(), "world");
@@ -63,7 +63,7 @@ impl ConfigValue {
     /// # Examples
     ///
     /// ```
-    /// use configuration::domain::config_value::ConfigValue;
+    /// use hexcfg::domain::config_value::ConfigValue;
     ///
     /// let value = ConfigValue::from("test");
     /// assert_eq!(value.as_string(), "test");
@@ -81,7 +81,7 @@ impl ConfigValue {
     /// # Examples
     ///
     /// ```
-    /// use configuration::domain::config_value::ConfigValue;
+    /// use hexcfg::domain::config_value::ConfigValue;
     ///
     /// let value = ConfigValue::from("true");
     /// assert_eq!(value.as_bool("test.key").unwrap(), true);
@@ -105,7 +105,7 @@ impl ConfigValue {
     /// # Examples
     ///
     /// ```
-    /// use configuration::domain::config_value::ConfigValue;
+    /// use hexcfg::domain::config_value::ConfigValue;
     ///
     /// let value = ConfigValue::from("42");
     /// assert_eq!(value.as_i32("test.key").unwrap(), 42);
@@ -121,7 +121,7 @@ impl ConfigValue {
     /// # Examples
     ///
     /// ```
-    /// use configuration::domain::config_value::ConfigValue;
+    /// use hexcfg::domain::config_value::ConfigValue;
     ///
     /// let value = ConfigValue::from("9223372036854775807");
     /// assert_eq!(value.as_i64("test.key").unwrap(), 9223372036854775807);
@@ -137,7 +137,7 @@ impl ConfigValue {
     /// # Examples
     ///
     /// ```
-    /// use configuration::domain::config_value::ConfigValue;
+    /// use hexcfg::domain::config_value::ConfigValue;
     ///
     /// let value = ConfigValue::from("42");
     /// assert_eq!(value.as_u32("test.key").unwrap(), 42);
@@ -153,7 +153,7 @@ impl ConfigValue {
     /// # Examples
     ///
     /// ```
-    /// use configuration::domain::config_value::ConfigValue;
+    /// use hexcfg::domain::config_value::ConfigValue;
     ///
     /// let value = ConfigValue::from("18446744073709551615");
     /// assert_eq!(value.as_u64("test.key").unwrap(), 18446744073709551615);
@@ -169,7 +169,7 @@ impl ConfigValue {
     /// # Examples
     ///
     /// ```
-    /// use configuration::domain::config_value::ConfigValue;
+    /// use hexcfg::domain::config_value::ConfigValue;
     ///
     /// let value = ConfigValue::from("3.14");
     /// assert_eq!(value.as_f64("test.key").unwrap(), 3.14);
@@ -185,7 +185,7 @@ impl ConfigValue {
     /// # Examples
     ///
     /// ```
-    /// use configuration::domain::config_value::ConfigValue;
+    /// use hexcfg::domain::config_value::ConfigValue;
     /// use std::net::IpAddr;
     ///
     /// let value = ConfigValue::from("127.0.0.1");

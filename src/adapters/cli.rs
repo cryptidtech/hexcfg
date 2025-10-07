@@ -31,8 +31,8 @@ const MAX_ARG_VALUE_LEN: usize = 65536; // 64KB
 /// # Examples
 ///
 /// ```rust
-/// use configuration::adapters::CommandLineAdapter;
-/// use configuration::ports::ConfigSource;
+/// use hexcfg::adapters::CommandLineAdapter;
+/// use hexcfg::ports::ConfigSource;
 ///
 /// let args = vec!["--database.host=localhost", "--port", "5432"];
 /// let adapter = CommandLineAdapter::from_args(args);
@@ -49,7 +49,7 @@ impl CommandLineAdapter {
     /// # Examples
     ///
     /// ```rust
-    /// use configuration::adapters::CommandLineAdapter;
+    /// use hexcfg::adapters::CommandLineAdapter;
     ///
     /// let adapter = CommandLineAdapter::new();
     /// ```
@@ -70,7 +70,7 @@ impl CommandLineAdapter {
     /// # Examples
     ///
     /// ```rust
-    /// use configuration::adapters::CommandLineAdapter;
+    /// use hexcfg::adapters::CommandLineAdapter;
     ///
     /// let args = vec!["--database.host=localhost", "--port", "5432"];
     /// let adapter = CommandLineAdapter::from_args(args);
@@ -88,7 +88,7 @@ impl CommandLineAdapter {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use configuration::adapters::CommandLineAdapter;
+    /// use hexcfg::adapters::CommandLineAdapter;
     ///
     /// let adapter = CommandLineAdapter::from_env_args();
     /// ```

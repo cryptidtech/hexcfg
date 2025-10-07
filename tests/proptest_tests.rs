@@ -5,7 +5,7 @@
 //! These tests use property-based testing to verify that the configuration
 //! system handles arbitrary inputs correctly.
 
-use configuration::domain::{ConfigKey, ConfigValue};
+use hexcfg::domain::{ConfigKey, ConfigValue};
 use proptest::prelude::*;
 
 // Test that ConfigKey can be created from any string

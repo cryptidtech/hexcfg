@@ -5,8 +5,8 @@
 //! This module provides helper functions and mock implementations
 //! that can be used across different test files.
 
-use configuration::domain::{ConfigError, ConfigKey, ConfigValue, Result};
-use configuration::ports::ConfigSource;
+use hexcfg::domain::{ConfigError, ConfigKey, ConfigValue, Result};
+use hexcfg::ports::ConfigSource;
 use std::collections::HashMap;
 
 /// A mock configuration source for testing.
@@ -139,7 +139,7 @@ pub fn create_precedence_sources() -> (MockConfigSource, MockConfigSource, MockC
 #[cfg(test)]
 mod tests {
     use super::*;
-    use configuration::domain::ConfigKey;
+    use hexcfg::domain::ConfigKey;
 
     #[test]
     fn test_mock_source_basic() {

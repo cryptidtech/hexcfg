@@ -27,8 +27,8 @@ pub type ChangeCallback = Arc<dyn Fn(ConfigKey) + Send + Sync>;
 /// # Examples
 ///
 /// ```rust
-/// use configuration::ports::ConfigWatcher;
-/// use configuration::domain::{ConfigKey, Result};
+/// use hexcfg::ports::ConfigWatcher;
+/// use hexcfg::domain::{ConfigKey, Result};
 /// use std::sync::Arc;
 ///
 /// struct MyWatcher;
@@ -63,8 +63,8 @@ pub trait ConfigWatcher: Send + Sync {
     /// # Examples
     ///
     /// ```rust
-    /// # use configuration::ports::ConfigWatcher;
-    /// # use configuration::domain::{ConfigKey, Result};
+    /// # use hexcfg::ports::ConfigWatcher;
+    /// # use hexcfg::domain::{ConfigKey, Result};
     /// # use std::sync::Arc;
     /// # struct MyWatcher;
     /// # impl ConfigWatcher for MyWatcher {
@@ -94,8 +94,8 @@ pub trait ConfigWatcher: Send + Sync {
     /// # Examples
     ///
     /// ```rust
-    /// # use configuration::ports::ConfigWatcher;
-    /// # use configuration::domain::{ConfigKey, Result};
+    /// # use hexcfg::ports::ConfigWatcher;
+    /// # use hexcfg::domain::{ConfigKey, Result};
     /// # use std::sync::Arc;
     /// # struct MyWatcher;
     /// # impl ConfigWatcher for MyWatcher {

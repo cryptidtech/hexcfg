@@ -32,8 +32,8 @@ use std::collections::HashMap;
 /// # Examples
 ///
 /// ```rust
-/// use configuration::ports::ConfigParser;
-/// use configuration::domain::Result;
+/// use hexcfg::ports::ConfigParser;
+/// use hexcfg::domain::Result;
 /// use std::collections::HashMap;
 ///
 /// struct MyParser;
@@ -67,8 +67,8 @@ pub trait ConfigParser {
     /// # Examples
     ///
     /// ```rust
-    /// # use configuration::ports::ConfigParser;
-    /// # use configuration::domain::Result;
+    /// # use hexcfg::ports::ConfigParser;
+    /// # use hexcfg::domain::Result;
     /// # use std::collections::HashMap;
     /// # struct MyParser;
     /// # impl ConfigParser for MyParser {
@@ -98,8 +98,8 @@ pub trait ConfigParser {
     /// # Examples
     ///
     /// ```rust
-    /// # use configuration::ports::ConfigParser;
-    /// # use configuration::domain::Result;
+    /// # use hexcfg::ports::ConfigParser;
+    /// # use hexcfg::domain::Result;
     /// # use std::collections::HashMap;
     /// # struct YamlParser;
     /// # impl ConfigParser for YamlParser {

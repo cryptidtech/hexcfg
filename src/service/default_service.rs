@@ -20,8 +20,8 @@ use std::sync::{Arc, RwLock};
 /// # Examples
 ///
 /// ```rust
-/// use configuration::prelude::*;
-/// use configuration::service::DefaultConfigService;
+/// use hexcfg::prelude::*;
+/// use hexcfg::service::DefaultConfigService;
 ///
 /// # fn main() -> Result<()> {
 /// // Create a service with environment variables
@@ -49,7 +49,7 @@ impl DefaultConfigService {
     /// # Examples
     ///
     /// ```rust
-    /// use configuration::service::DefaultConfigService;
+    /// use hexcfg::service::DefaultConfigService;
     ///
     /// let service = DefaultConfigService::new();
     /// ```
@@ -66,9 +66,9 @@ impl DefaultConfigService {
     /// # Examples
     ///
     /// ```rust
-    /// use configuration::service::DefaultConfigService;
+    /// use hexcfg::service::DefaultConfigService;
     ///
-    /// # fn main() -> configuration::domain::Result<()> {
+    /// # fn main() -> hexcfg::domain::Result<()> {
     /// let service = DefaultConfigService::builder()
     ///     .with_env_vars()
     ///     .build()?;
@@ -93,9 +93,9 @@ impl DefaultConfigService {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use configuration::service::DefaultConfigService;
+    /// use hexcfg::service::DefaultConfigService;
     ///
-    /// # fn main() -> configuration::domain::Result<()> {
+    /// # fn main() -> hexcfg::domain::Result<()> {
     /// let service = DefaultConfigService::with_defaults("myapp", "com.example")?;
     /// # Ok(())
     /// # }
@@ -231,9 +231,9 @@ impl ConfigurationService for DefaultConfigService {
 /// # Examples
 ///
 /// ```rust
-/// use configuration::service::ConfigurationServiceBuilder;
+/// use hexcfg::service::ConfigurationServiceBuilder;
 ///
-/// # fn main() -> configuration::domain::Result<()> {
+/// # fn main() -> hexcfg::domain::Result<()> {
 /// let service = ConfigurationServiceBuilder::new()
 ///     .with_env_vars()
 ///     .build()?;
@@ -257,10 +257,10 @@ impl ConfigurationServiceBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use configuration::service::ConfigurationServiceBuilder;
-    /// use configuration::adapters::EnvVarAdapter;
+    /// use hexcfg::service::ConfigurationServiceBuilder;
+    /// use hexcfg::adapters::EnvVarAdapter;
     ///
-    /// # fn main() -> configuration::domain::Result<()> {
+    /// # fn main() -> hexcfg::domain::Result<()> {
     /// let service = ConfigurationServiceBuilder::new()
     ///     .with_source(Box::new(EnvVarAdapter::new()))
     ///     .build()?;
@@ -277,9 +277,9 @@ impl ConfigurationServiceBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use configuration::service::ConfigurationServiceBuilder;
+    /// use hexcfg::service::ConfigurationServiceBuilder;
     ///
-    /// # fn main() -> configuration::domain::Result<()> {
+    /// # fn main() -> hexcfg::domain::Result<()> {
     /// let service = ConfigurationServiceBuilder::new()
     ///     .with_env_vars()
     ///     .build()?;
@@ -297,9 +297,9 @@ impl ConfigurationServiceBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use configuration::service::ConfigurationServiceBuilder;
+    /// use hexcfg::service::ConfigurationServiceBuilder;
     ///
-    /// # fn main() -> configuration::domain::Result<()> {
+    /// # fn main() -> hexcfg::domain::Result<()> {
     /// let service = ConfigurationServiceBuilder::new()
     ///     .with_env_prefix("MYAPP_")
     ///     .build()?;
@@ -319,9 +319,9 @@ impl ConfigurationServiceBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use configuration::service::ConfigurationServiceBuilder;
+    /// use hexcfg::service::ConfigurationServiceBuilder;
     ///
-    /// # fn main() -> configuration::domain::Result<()> {
+    /// # fn main() -> hexcfg::domain::Result<()> {
     /// let args = vec!["--key", "value"];
     /// let service = ConfigurationServiceBuilder::new()
     ///     .with_cli_args(args)
@@ -340,9 +340,9 @@ impl ConfigurationServiceBuilder {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use configuration::service::ConfigurationServiceBuilder;
+    /// use hexcfg::service::ConfigurationServiceBuilder;
     ///
-    /// # fn main() -> configuration::domain::Result<()> {
+    /// # fn main() -> hexcfg::domain::Result<()> {
     /// let service = ConfigurationServiceBuilder::new()
     ///     .with_yaml_file("/etc/myapp/config.yaml")?
     ///     .build()?;
@@ -366,10 +366,10 @@ impl ConfigurationServiceBuilder {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use configuration::service::ConfigurationServiceBuilder;
+    /// use hexcfg::service::ConfigurationServiceBuilder;
     ///
     /// # #[tokio::main]
-    /// # async fn main() -> configuration::domain::Result<()> {
+    /// # async fn main() -> hexcfg::domain::Result<()> {
     /// let service = ConfigurationServiceBuilder::new()
     ///     .with_etcd(vec!["localhost:2379"], Some("myapp/")).await?
     ///     .build()?;
@@ -398,10 +398,10 @@ impl ConfigurationServiceBuilder {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use configuration::service::ConfigurationServiceBuilder;
+    /// use hexcfg::service::ConfigurationServiceBuilder;
     ///
     /// # #[tokio::main]
-    /// # async fn main() -> configuration::domain::Result<()> {
+    /// # async fn main() -> hexcfg::domain::Result<()> {
     /// let service = ConfigurationServiceBuilder::new()
     ///     .with_etcd_priority(vec!["localhost:2379"], Some("myapp/"), 2).await?
     ///     .build()?;
@@ -431,11 +431,11 @@ impl ConfigurationServiceBuilder {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use configuration::service::ConfigurationServiceBuilder;
-    /// use configuration::adapters::RedisStorageMode;
+    /// use hexcfg::service::ConfigurationServiceBuilder;
+    /// use hexcfg::adapters::RedisStorageMode;
     ///
     /// # #[tokio::main]
-    /// # async fn main() -> configuration::domain::Result<()> {
+    /// # async fn main() -> hexcfg::domain::Result<()> {
     /// let service = ConfigurationServiceBuilder::new()
     ///     .with_redis("redis://localhost:6379", "myapp:", RedisStorageMode::StringKeys).await?
     ///     .build()?;
@@ -466,11 +466,11 @@ impl ConfigurationServiceBuilder {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use configuration::service::ConfigurationServiceBuilder;
-    /// use configuration::adapters::RedisStorageMode;
+    /// use hexcfg::service::ConfigurationServiceBuilder;
+    /// use hexcfg::adapters::RedisStorageMode;
     ///
     /// # #[tokio::main]
-    /// # async fn main() -> configuration::domain::Result<()> {
+    /// # async fn main() -> hexcfg::domain::Result<()> {
     /// let service = ConfigurationServiceBuilder::new()
     ///     .with_redis_priority(
     ///         "redis://localhost:6379",
@@ -500,9 +500,9 @@ impl ConfigurationServiceBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use configuration::service::ConfigurationServiceBuilder;
+    /// use hexcfg::service::ConfigurationServiceBuilder;
     ///
-    /// # fn main() -> configuration::domain::Result<()> {
+    /// # fn main() -> hexcfg::domain::Result<()> {
     /// let service = ConfigurationServiceBuilder::new()
     ///     .with_env_vars()
     ///     .build()?;

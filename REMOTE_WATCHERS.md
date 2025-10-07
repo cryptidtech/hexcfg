@@ -29,9 +29,9 @@ The configuration library now supports real-time change notifications for remote
 ### etcd Watcher
 
 ```rust
-use configuration::prelude::*;
-use configuration::adapters::EtcdWatcher;
-use configuration::ports::ConfigWatcher;
+use hexcfg::prelude::*;
+use hexcfg::adapters::EtcdWatcher;
+use hexcfg::ports::ConfigWatcher;
 use std::sync::{Arc, Mutex};
 
 #[tokio::main]
@@ -70,9 +70,9 @@ async fn main() -> Result<()> {
 ### Redis Watcher
 
 ```rust
-use configuration::prelude::*;
-use configuration::adapters::RedisWatcher;
-use configuration::ports::ConfigWatcher;
+use hexcfg::prelude::*;
+use hexcfg::adapters::RedisWatcher;
+use hexcfg::ports::ConfigWatcher;
 use std::sync::{Arc, Mutex};
 
 fn main() -> Result<()> {

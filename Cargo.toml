@@ -1,6 +1,6 @@
 [package]
 name = "hexcfg"
-version = "1.1.2"
+version = "1.1.4"
 edition = "2021"
 authors = ["Dave Grantham <dwg@linuxprogrammer.org>"]
 license = "Apache-2.0"

@@ -40,8 +40,8 @@ pub enum RedisStorageMode {
 /// # Examples
 ///
 /// ```rust,no_run
-/// use configuration::adapters::{RedisAdapter, RedisStorageMode};
-/// use configuration::ports::ConfigSource;
+/// use hexcfg::adapters::{RedisAdapter, RedisStorageMode};
+/// use hexcfg::ports::ConfigSource;
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -100,7 +100,7 @@ impl RedisAdapter {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use configuration::adapters::{RedisAdapter, RedisStorageMode};
+    /// use hexcfg::adapters::{RedisAdapter, RedisStorageMode};
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -148,7 +148,7 @@ impl RedisAdapter {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use configuration::adapters::{RedisAdapter, RedisStorageMode};
+    /// use hexcfg::adapters::{RedisAdapter, RedisStorageMode};
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {

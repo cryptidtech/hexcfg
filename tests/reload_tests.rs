@@ -2,7 +2,7 @@
 
 //! Integration tests for dynamic configuration reloading.
 
-use configuration::prelude::*;
+use hexcfg::prelude::*;
 use std::fs;
 use tempfile::NamedTempFile;
 
@@ -195,7 +195,7 @@ fn test_reload_respects_precedence() {
 #[test]
 #[cfg(all(feature = "yaml", feature = "reload"))]
 fn test_file_watcher_creation() {
-    use configuration::adapters::FileWatcher;
+    use hexcfg::adapters::FileWatcher;
 
     // Create a temporary YAML file
     let temp_file = NamedTempFile::new().unwrap();
@@ -208,7 +208,7 @@ fn test_file_watcher_creation() {
 #[test]
 #[cfg(all(feature = "yaml", feature = "reload"))]
 fn test_file_watcher_nonexistent_file() {
-    use configuration::adapters::FileWatcher;
+    use hexcfg::adapters::FileWatcher;
 
     // Try to watch a nonexistent file
     let watcher = FileWatcher::new("/nonexistent/file.yaml", None);
@@ -218,8 +218,8 @@ fn test_file_watcher_nonexistent_file() {
 #[test]
 #[cfg(all(feature = "yaml", feature = "reload"))]
 fn test_file_watcher_start_stop() {
-    use configuration::adapters::FileWatcher;
-    use configuration::ports::ConfigWatcher;
+    use hexcfg::adapters::FileWatcher;
+    use hexcfg::ports::ConfigWatcher;
 
     // Create a temporary YAML file
     let temp_file = NamedTempFile::new().unwrap();
@@ -240,8 +240,8 @@ fn test_file_watcher_start_stop() {
 #[test]
 #[cfg(all(feature = "yaml", feature = "reload"))]
 fn test_file_watcher_callback_triggered() {
-    use configuration::adapters::FileWatcher;
-    use configuration::ports::ConfigWatcher;
+    use hexcfg::adapters::FileWatcher;
+    use hexcfg::ports::ConfigWatcher;
 
     // Create a temporary YAML file
     let temp_file = NamedTempFile::new().unwrap();
@@ -281,8 +281,8 @@ fn test_file_watcher_callback_triggered() {
 #[test]
 #[cfg(all(feature = "yaml", feature = "reload"))]
 fn test_file_watcher_debouncing() {
-    use configuration::adapters::FileWatcher;
-    use configuration::ports::ConfigWatcher;
+    use hexcfg::adapters::FileWatcher;
+    use hexcfg::ports::ConfigWatcher;
 
     // Create a temporary YAML file
     let temp_file = NamedTempFile::new().unwrap();
@@ -330,7 +330,7 @@ fn test_file_watcher_debouncing() {
 #[test]
 #[cfg(all(feature = "yaml", feature = "reload"))]
 fn test_service_with_watcher() {
-    use configuration::adapters::FileWatcher;
+    use hexcfg::adapters::FileWatcher;
 
     // Create a temporary YAML file
     let temp_file = NamedTempFile::new().unwrap();

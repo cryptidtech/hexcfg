@@ -37,7 +37,7 @@
 //! # Quick Start
 //!
 //! ```rust
-//! use configuration::prelude::*;
+//! use hexcfg::prelude::*;
 //!
 //! # fn main() -> Result<()> {
 //! // Create a configuration service with environment variables

@@ -2,7 +2,7 @@
 
 //! Integration tests for configuration source precedence.
 
-use configuration::prelude::*;
+use hexcfg::prelude::*;
 use std::env;
 use std::io::Write;
 use tempfile::NamedTempFile;

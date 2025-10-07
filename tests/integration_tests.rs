@@ -5,9 +5,9 @@
 //! These tests verify that the configuration service works correctly
 //! with various sources and handles common use cases.
 
-use configuration::adapters::{CommandLineAdapter, EnvVarAdapter, YamlFileAdapter};
-use configuration::domain::{ConfigKey, ConfigurationService};
-use configuration::service::{ConfigurationServiceBuilder, DefaultConfigService};
+use hexcfg::adapters::{CommandLineAdapter, EnvVarAdapter, YamlFileAdapter};
+use hexcfg::domain::{ConfigKey, ConfigurationService};
+use hexcfg::service::{ConfigurationServiceBuilder, DefaultConfigService};
 use std::collections::HashMap;
 use std::io::Write;
 use tempfile::NamedTempFile;

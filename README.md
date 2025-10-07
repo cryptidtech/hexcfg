@@ -1,7 +1,7 @@
-# Hexagonal Architecgture Configuration Service
+# Hexagonal Architecture Configuration Service
 
-[![Crates.io](https://img.shields.io/crates/v/configuration.svg)](https://crates.io/crates/configuration)
-[![Documentation](https://docs.rs/configuration/badge.svg)](https://docs.rs/configuration)
+[![Crates.io](https://img.shields.io/crates/v/hexcfg.svg)](https://crates.io/crates/hexcfg)
+[![Documentation](https://docs.rs/hexcfg/badge.svg)](https://docs.rs/hexcfg)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE-APACHE)
 
 A flexible, type-safe configuration management library for Rust applications, built with hexagonal architecture principles.
@@ -22,13 +22,13 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-configuration = "0.7.0"
+hexcfg = "1.1.4"
 ```
 
 ### Basic Usage
 
 ```rust
-use configuration::prelude::*;
+use hexcfg::prelude::*;
 
 fn main() -> Result<()> {
     // Create a configuration service with environment variables
@@ -79,7 +79,7 @@ The crate uses feature flags to enable optional functionality:
 
 ```toml
 [dependencies]
-configuration = { version = "0.7.0", default-features = false, features = ["yaml", "env"] }
+hexcfg = { version = "1.1.3", default-features = false, features = ["yaml", "env"] }
 ```
 
 ## Architecture
@@ -127,7 +127,7 @@ This crate follows hexagonal architecture principles:
 For more ergonomic usage, the crate provides `_str` variants of common methods that accept string slices directly:
 
 ```rust
-use configuration::prelude::*;
+use hexcfg::prelude::*;
 
 fn main() -> Result<()> {
     let service = DefaultConfigService::builder()
@@ -156,10 +156,10 @@ Both approaches work - use whichever feels more natural for your code style!
 Combine multiple sources with automatic precedence handling:
 
 ```rust
-use configuration::prelude::*;
+use hexcfg::prelude::*;
 
 fn main() -> Result<()> {
-    let service = ConfigurationServiceBuilder::new()
+    let service = DefaultConfigService::builder()
         .with_yaml_file("/etc/myapp/config.yaml")?
         .with_env_vars()
         .with_cli_args(std::env::args().collect())
@@ -178,12 +178,12 @@ fn main() -> Result<()> {
 Watch configuration files for changes:
 
 ```rust
-use configuration::prelude::*;
+use hexcfg::prelude::*;
 use std::sync::{Arc, Mutex};
 
 fn main() -> Result<()> {
     let service = Arc::new(Mutex::new(
-        ConfigurationServiceBuilder::new()
+        DefaultConfigService::builder()
             .with_yaml_file("/etc/myapp/config.yaml")?
             .build()?
     ));
@@ -212,7 +212,7 @@ fn main() -> Result<()> {
 Automatic type conversion with error handling:
 
 ```rust
-use configuration::prelude::*;
+use hexcfg::prelude::*;
 
 fn main() -> Result<()> {
     let service = DefaultConfigService::builder()
@@ -245,12 +245,12 @@ fn main() -> Result<()> {
 Filter environment variables by prefix:
 
 ```rust
-use configuration::prelude::*;
+use hexcfg::prelude::*;
 
 fn main() -> Result<()> {
     // Only read environment variables starting with "MYAPP_"
     // MYAPP_DATABASE_HOST becomes "database.host"
-    let service = ConfigurationServiceBuilder::new()
+    let service = DefaultConfigService::builder()
         .with_env_prefix("MYAPP_")
         .build()?;
 
@@ -261,11 +261,11 @@ fn main() -> Result<()> {
 ### Remote Configuration (etcd)
 
 ```rust
-use configuration::prelude::*;
+use hexcfg::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let service = ConfigurationServiceBuilder::new()
+    let service = DefaultConfigService::builder()
         .with_etcd(vec!["localhost:2379"], Some("myapp/")).await?
         .build()?;
 
@@ -277,11 +277,11 @@ async fn main() -> Result<()> {
 ### Remote Configuration (Redis)
 
 ```rust
-use configuration::prelude::*;
+use hexcfg::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let service = ConfigurationServiceBuilder::new()
+    let service = DefaultConfigService::builder()
         .with_redis(
             "redis://localhost:6379",
             "myapp:",
@@ -301,15 +301,15 @@ async fn main() -> Result<()> {
 Watch for configuration changes in etcd using its native watch API:
 
 ```rust
-use configuration::prelude::*;
-use configuration::adapters::EtcdWatcher;
-use configuration::ports::ConfigWatcher;
+use hexcfg::prelude::*;
+use hexcfg::adapters::EtcdWatcher;
+use hexcfg::ports::ConfigWatcher;
 use std::sync::{Arc, Mutex};
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let service = Arc::new(Mutex::new(
-        ConfigurationServiceBuilder::new()
+        DefaultConfigService::builder()
             .with_etcd(vec!["localhost:2379"], Some("myapp/")).await?
             .build()?
     ));
@@ -338,14 +338,15 @@ async fn main() -> Result<()> {
 Watch for configuration changes in Redis using keyspace notifications:
 
 ```rust
-use configuration::prelude::*;
-use configuration::adapters::RedisWatcher;
-use configuration::ports::ConfigWatcher;
+use hexcfg::prelude::*;
+use hexcfg::adapters::RedisWatcher;
+use hexcfg::ports::ConfigWatcher;
 use std::sync::{Arc, Mutex};
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let service = Arc::new(Mutex::new(
-        ConfigurationServiceBuilder::new()
+        DefaultConfigService::builder()
             .with_redis(
                 "redis://localhost:6379",
                 "myapp:",
@@ -390,8 +391,8 @@ notify-keyspace-events KEA
 Implement the `ConfigSource` trait to create custom sources:
 
 ```rust
-use configuration::ports::ConfigSource;
-use configuration::domain::{ConfigKey, ConfigValue, Result};
+use hexcfg::ports::ConfigSource;
+use hexcfg::domain::{ConfigKey, ConfigValue, Result};
 
 struct MyCustomSource;
 
@@ -437,7 +438,7 @@ When multiple sources provide the same key, the value from the highest priority 
 The crate provides comprehensive error types via `thiserror`:
 
 ```rust
-use configuration::prelude::*;
+use hexcfg::prelude::*;
 
 fn load_config() -> Result<()> {
     let service = DefaultConfigService::builder()
@@ -546,7 +547,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ## Project Status
 
-This crate is currently at version 1.0.0 and includes:
+This crate is ready for use and includes:
 
 - ✅ Core domain types (ConfigKey, ConfigValue)
 - ✅ Configuration service with priority-based source management

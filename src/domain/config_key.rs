@@ -17,7 +17,7 @@ use std::hash::{Hash, Hasher};
 /// # Examples
 ///
 /// ```
-/// use configuration::domain::config_key::ConfigKey;
+/// use hexcfg::domain::config_key::ConfigKey;
 ///
 /// let key = ConfigKey::from("database.host");
 /// let key2 = ConfigKey::from("database.port".to_string());
@@ -33,7 +33,7 @@ impl ConfigKey {
     /// # Examples
     ///
     /// ```
-    /// use configuration::domain::config_key::ConfigKey;
+    /// use hexcfg::domain::config_key::ConfigKey;
     ///
     /// let key = ConfigKey::new("app.name".to_string());
     /// assert_eq!(key.as_str(), "app.name");
@@ -47,7 +47,7 @@ impl ConfigKey {
     /// # Examples
     ///
     /// ```
-    /// use configuration::domain::config_key::ConfigKey;
+    /// use hexcfg::domain::config_key::ConfigKey;
     ///
     /// let key = ConfigKey::from("app.version");
     /// assert_eq!(key.as_str(), "app.version");
@@ -61,7 +61,7 @@ impl ConfigKey {
     /// # Examples
     ///
     /// ```
-    /// use configuration::domain::config_key::ConfigKey;
+    /// use hexcfg::domain::config_key::ConfigKey;
     ///
     /// let key = ConfigKey::from("app.debug");
     /// let inner = key.into_string();

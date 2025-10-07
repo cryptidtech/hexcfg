@@ -6,9 +6,9 @@ mod common;
 
 #[cfg(feature = "etcd")]
 mod etcd_tests {
-    use configuration::adapters::EtcdAdapter;
-    use configuration::domain::ConfigKey;
-    use configuration::ports::ConfigSource;
+    use hexcfg::adapters::EtcdAdapter;
+    use hexcfg::domain::ConfigKey;
+    use hexcfg::ports::ConfigSource;
     use testcontainers::{core::WaitFor, runners::AsyncRunner, GenericImage, ImageExt};
 
     use crate::common as docker_helpers;
@@ -226,9 +226,9 @@ mod etcd_tests {
 
     #[tokio::test]
     async fn test_cli_overrides_etcd() {
-        use configuration::adapters::CommandLineAdapter;
-        use configuration::domain::ConfigurationService;
-        use configuration::service::ConfigurationServiceBuilder;
+        use hexcfg::adapters::CommandLineAdapter;
+        use hexcfg::domain::ConfigurationService;
+        use hexcfg::service::ConfigurationServiceBuilder;
 
         let Some((_container, etcd_adapter)) = setup_etcd_test().await else {
             return;
@@ -252,9 +252,9 @@ mod etcd_tests {
 
     #[tokio::test]
     async fn test_env_overrides_etcd() {
-        use configuration::adapters::EnvVarAdapter;
-        use configuration::domain::ConfigurationService;
-        use configuration::service::ConfigurationServiceBuilder;
+        use hexcfg::adapters::EnvVarAdapter;
+        use hexcfg::domain::ConfigurationService;
+        use hexcfg::service::ConfigurationServiceBuilder;
         use std::collections::HashMap;
 
         let Some((_container, etcd_adapter)) = setup_etcd_test().await else {
@@ -280,9 +280,9 @@ mod etcd_tests {
 
     #[tokio::test]
     async fn test_full_precedence_chain_with_etcd() {
-        use configuration::adapters::{CommandLineAdapter, EnvVarAdapter};
-        use configuration::domain::ConfigurationService;
-        use configuration::service::ConfigurationServiceBuilder;
+        use hexcfg::adapters::{CommandLineAdapter, EnvVarAdapter};
+        use hexcfg::domain::ConfigurationService;
+        use hexcfg::service::ConfigurationServiceBuilder;
         use std::collections::HashMap;
 
         let Some((_container, etcd_adapter)) = setup_etcd_test().await else {
@@ -326,9 +326,9 @@ mod etcd_tests {
 
     #[tokio::test]
     async fn test_etcd_with_custom_priority_overrides_env() {
-        use configuration::adapters::EnvVarAdapter;
-        use configuration::domain::ConfigurationService;
-        use configuration::service::ConfigurationServiceBuilder;
+        use hexcfg::adapters::EnvVarAdapter;
+        use hexcfg::domain::ConfigurationService;
+        use hexcfg::service::ConfigurationServiceBuilder;
         use std::collections::HashMap;
 
         if !docker_helpers::is_docker_available() {
@@ -410,7 +410,7 @@ mod etcd_tests {
 
     #[tokio::test]
     async fn test_etcd_watcher_creation() {
-        use configuration::adapters::EtcdWatcher;
+        use hexcfg::adapters::EtcdWatcher;
 
         let Some((_container, endpoint)) = setup_etcd_watcher_test().await else {
             return;
@@ -422,7 +422,7 @@ mod etcd_tests {
 
     #[tokio::test]
     async fn test_etcd_watcher_invalid_endpoint() {
-        use configuration::adapters::EtcdWatcher;
+        use hexcfg::adapters::EtcdWatcher;
 
         // Use localhost with closed port - this should fail connection immediately
         let watcher = EtcdWatcher::new(vec!["127.0.0.1:19999"], Some("test/")).await;
@@ -435,8 +435,8 @@ mod etcd_tests {
 
     #[tokio::test]
     async fn test_etcd_watcher_start_stop() {
-        use configuration::adapters::EtcdWatcher;
-        use configuration::ports::ConfigWatcher;
+        use hexcfg::adapters::EtcdWatcher;
+        use hexcfg::ports::ConfigWatcher;
         use std::sync::Arc;
 
         let Some((_container, endpoint)) = setup_etcd_watcher_test().await else {
@@ -463,8 +463,8 @@ mod etcd_tests {
 
     #[tokio::test]
     async fn test_etcd_watcher_callback_triggered() {
-        use configuration::adapters::EtcdWatcher;
-        use configuration::ports::ConfigWatcher;
+        use hexcfg::adapters::EtcdWatcher;
+        use hexcfg::ports::ConfigWatcher;
         use etcd_client::Client;
         use std::sync::atomic::{AtomicBool, Ordering};
         use std::sync::Arc;
@@ -513,8 +513,8 @@ mod etcd_tests {
 
     #[tokio::test]
     async fn test_etcd_watcher_multiple_changes() {
-        use configuration::adapters::EtcdWatcher;
-        use configuration::ports::ConfigWatcher;
+        use hexcfg::adapters::EtcdWatcher;
+        use hexcfg::ports::ConfigWatcher;
         use etcd_client::Client;
         use std::sync::atomic::{AtomicUsize, Ordering};
         use std::sync::Arc;
@@ -569,8 +569,8 @@ mod etcd_tests {
 
     #[tokio::test]
     async fn test_etcd_watcher_prefix_filtering() {
-        use configuration::adapters::EtcdWatcher;
-        use configuration::ports::ConfigWatcher;
+        use hexcfg::adapters::EtcdWatcher;
+        use hexcfg::ports::ConfigWatcher;
         use etcd_client::Client;
         use std::sync::atomic::{AtomicUsize, Ordering};
         use std::sync::Arc;

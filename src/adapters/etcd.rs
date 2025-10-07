@@ -29,8 +29,8 @@ static RELOAD_RUNTIME: Lazy<tokio::runtime::Runtime> = Lazy::new(|| {
 /// # Examples
 ///
 /// ```rust,no_run
-/// use configuration::adapters::EtcdAdapter;
-/// use configuration::ports::ConfigSource;
+/// use hexcfg::adapters::EtcdAdapter;
+/// use hexcfg::ports::ConfigSource;
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -89,7 +89,7 @@ impl EtcdAdapter {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use configuration::adapters::EtcdAdapter;
+    /// use hexcfg::adapters::EtcdAdapter;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -140,7 +140,7 @@ impl EtcdAdapter {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use configuration::adapters::EtcdAdapter;
+    /// use hexcfg::adapters::EtcdAdapter;
     ///
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {

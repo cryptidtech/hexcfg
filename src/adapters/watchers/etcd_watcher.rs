@@ -20,12 +20,12 @@ use std::thread::{self, JoinHandle};
 /// # Examples
 ///
 /// ```rust,no_run
-/// use configuration::adapters::EtcdWatcher;
-/// use configuration::ports::ConfigWatcher;
+/// use hexcfg::adapters::EtcdWatcher;
+/// use hexcfg::ports::ConfigWatcher;
 /// use std::sync::Arc;
 ///
 /// # #[tokio::main]
-/// # async fn main() -> configuration::domain::Result<()> {
+/// # async fn main() -> hexcfg::domain::Result<()> {
 /// let mut watcher = EtcdWatcher::new(
 ///     vec!["localhost:2379"],
 ///     Some("myapp/")
@@ -63,10 +63,10 @@ impl EtcdWatcher {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use configuration::adapters::EtcdWatcher;
+    /// use hexcfg::adapters::EtcdWatcher;
     ///
     /// # #[tokio::main]
-    /// # async fn main() -> configuration::domain::Result<()> {
+    /// # async fn main() -> hexcfg::domain::Result<()> {
     /// let watcher = EtcdWatcher::new(
     ///     vec!["localhost:2379"],
     ///     Some("myapp/")

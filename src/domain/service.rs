@@ -18,8 +18,8 @@ use crate::ports::ConfigWatcher;
 /// # Examples
 ///
 /// ```rust
-/// use configuration::domain::{ConfigurationService, ConfigKey, ConfigValue, Result};
-/// use configuration::ports::ConfigWatcher;
+/// use hexcfg::domain::{ConfigurationService, ConfigKey, ConfigValue, Result};
+/// use hexcfg::ports::ConfigWatcher;
 ///
 /// struct MyConfigService;
 ///
@@ -65,8 +65,8 @@ pub trait ConfigurationService {
     /// # Examples
     ///
     /// ```rust
-    /// # use configuration::domain::{ConfigurationService, ConfigKey, ConfigValue, Result};
-    /// # use configuration::ports::ConfigWatcher;
+    /// # use hexcfg::domain::{ConfigurationService, ConfigKey, ConfigValue, Result};
+    /// # use hexcfg::ports::ConfigWatcher;
     /// # struct MyConfigService;
     /// # impl ConfigurationService for MyConfigService {
     /// #     fn get(&self, key: &ConfigKey) -> Result<ConfigValue> {
@@ -103,8 +103,8 @@ pub trait ConfigurationService {
     /// # Examples
     ///
     /// ```rust
-    /// # use configuration::domain::{ConfigurationService, ConfigKey, ConfigValue, Result};
-    /// # use configuration::ports::ConfigWatcher;
+    /// # use hexcfg::domain::{ConfigurationService, ConfigKey, ConfigValue, Result};
+    /// # use hexcfg::ports::ConfigWatcher;
     /// # struct MyConfigService;
     /// # impl ConfigurationService for MyConfigService {
     /// #     fn get(&self, key: &ConfigKey) -> Result<ConfigValue> {
@@ -143,8 +143,8 @@ pub trait ConfigurationService {
     /// # Examples
     ///
     /// ```rust
-    /// # use configuration::domain::{ConfigurationService, ConfigKey, ConfigValue, Result, ConfigError};
-    /// # use configuration::ports::ConfigWatcher;
+    /// # use hexcfg::domain::{ConfigurationService, ConfigKey, ConfigValue, Result, ConfigError};
+    /// # use hexcfg::ports::ConfigWatcher;
     /// # struct MyConfigService;
     /// # impl ConfigurationService for MyConfigService {
     /// #     fn get(&self, key: &ConfigKey) -> Result<ConfigValue> {
@@ -183,8 +183,8 @@ pub trait ConfigurationService {
     /// # Examples
     ///
     /// ```rust
-    /// # use configuration::domain::{ConfigurationService, ConfigKey, ConfigValue, Result, ConfigError};
-    /// # use configuration::ports::ConfigWatcher;
+    /// # use hexcfg::domain::{ConfigurationService, ConfigKey, ConfigValue, Result, ConfigError};
+    /// # use hexcfg::ports::ConfigWatcher;
     /// # struct MyConfigService;
     /// # impl ConfigurationService for MyConfigService {
     /// #     fn get(&self, key: &ConfigKey) -> Result<ConfigValue> {
@@ -224,8 +224,8 @@ pub trait ConfigurationService {
     /// # Examples
     ///
     /// ```rust
-    /// # use configuration::domain::{ConfigurationService, ConfigKey, ConfigValue, Result};
-    /// # use configuration::ports::ConfigWatcher;
+    /// # use hexcfg::domain::{ConfigurationService, ConfigKey, ConfigValue, Result};
+    /// # use hexcfg::ports::ConfigWatcher;
     /// # struct MyConfigService;
     /// # impl ConfigurationService for MyConfigService {
     /// #     fn get(&self, key: &ConfigKey) -> Result<ConfigValue> {
@@ -260,8 +260,8 @@ pub trait ConfigurationService {
     /// # Examples
     ///
     /// ```rust
-    /// # use configuration::domain::{ConfigurationService, ConfigKey, ConfigValue, Result};
-    /// # use configuration::ports::ConfigWatcher;
+    /// # use hexcfg::domain::{ConfigurationService, ConfigKey, ConfigValue, Result};
+    /// # use hexcfg::ports::ConfigWatcher;
     /// # struct MyConfigService;
     /// # impl ConfigurationService for MyConfigService {
     /// #     fn get(&self, key: &ConfigKey) -> Result<ConfigValue> {
@@ -296,8 +296,8 @@ pub trait ConfigurationService {
     /// # Examples
     ///
     /// ```rust
-    /// # use configuration::domain::{ConfigurationService, ConfigKey, ConfigValue, Result};
-    /// # use configuration::ports::ConfigWatcher;
+    /// # use hexcfg::domain::{ConfigurationService, ConfigKey, ConfigValue, Result};
+    /// # use hexcfg::ports::ConfigWatcher;
     /// # struct MyConfigService;
     /// # impl ConfigurationService for MyConfigService {
     /// #     fn get(&self, key: &ConfigKey) -> Result<ConfigValue> {
@@ -333,8 +333,8 @@ pub trait ConfigurationService {
     /// # Examples
     ///
     /// ```rust
-    /// # use configuration::domain::{ConfigurationService, ConfigKey, ConfigValue, Result};
-    /// # use configuration::ports::ConfigWatcher;
+    /// # use hexcfg::domain::{ConfigurationService, ConfigKey, ConfigValue, Result};
+    /// # use hexcfg::ports::ConfigWatcher;
     /// # use std::sync::Arc;
     /// # struct MyConfigService;
     /// # impl ConfigurationService for MyConfigService {

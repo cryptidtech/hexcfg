@@ -23,11 +23,11 @@ use std::time::{Duration, Instant};
 /// # Examples
 ///
 /// ```rust,no_run
-/// use configuration::adapters::FileWatcher;
-/// use configuration::ports::ConfigWatcher;
+/// use hexcfg::adapters::FileWatcher;
+/// use hexcfg::ports::ConfigWatcher;
 /// use std::sync::Arc;
 ///
-/// # fn main() -> configuration::domain::Result<()> {
+/// # fn main() -> hexcfg::domain::Result<()> {
 /// let mut watcher = FileWatcher::new("/path/to/config.yaml", None)?;
 ///
 /// watcher.watch(Arc::new(|key| {
@@ -66,10 +66,10 @@ impl FileWatcher {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use configuration::adapters::FileWatcher;
+    /// use hexcfg::adapters::FileWatcher;
     /// use std::time::Duration;
     ///
-    /// # fn main() -> configuration::domain::Result<()> {
+    /// # fn main() -> hexcfg::domain::Result<()> {
     /// // With default debounce delay
     /// let watcher = FileWatcher::new("/path/to/config.yaml", None)?;
     ///
