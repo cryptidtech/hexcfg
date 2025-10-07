@@ -1,4 +1,4 @@
-# Configuration
+# Hexagonal Architecgture Configuration Service
 
 [![Crates.io](https://img.shields.io/crates/v/configuration.svg)](https://crates.io/crates/configuration)
 [![Documentation](https://docs.rs/configuration/badge.svg)](https://docs.rs/configuration)
