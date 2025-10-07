@@ -3,8 +3,10 @@ name = "hexcfg"
 version = "1.1.0"
 edition = "2021"
 authors = ["Dave Grantham <dwg@linuxprogrammer.org>"]
-license = "MIT OR Apache-2.0"
+license = "Apache-2.0"
 description = "A hexagonal architecture configuration loading crate with multi-source support"
+repository = "https://github.com/cryptidtech/hexcfg"
+homepage = "https://github.com/cryptidtech/hexcfg"
 keywords = ["config", "configuration", "yaml", "environment", "etcd"]
 categories = ["config", "development-tools"]
 
