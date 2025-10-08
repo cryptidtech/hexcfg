@@ -79,7 +79,7 @@ The crate uses feature flags to enable optional functionality:
 
 ```toml
 [dependencies]
-hexcfg = { version = "1.1.3", default-features = false, features = ["yaml", "env"] }
+hexcfg = { version = "1.1.4", default-features = false, features = ["yaml", "env"] }
 ```
 
 ## Architecture
@@ -534,33 +534,10 @@ Contributions are welcome! Please ensure:
 
 ## License
 
-Licensed under either of:
+Licensed under:
 
 - Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
-- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
-
-at your option.
 
 ### Contribution
 
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
-
-## Project Status
-
-This crate is ready for use and includes:
-
-- ✅ Core domain types (ConfigKey, ConfigValue)
-- ✅ Configuration service with priority-based source management
-- ✅ YAML file support
-- ✅ Environment variable support
-- ✅ Command-line argument support
-- ✅ Dynamic reloading with file watching
-- ✅ etcd integration
-- ✅ Redis integration
-- ✅ Comprehensive test suite (unit, integration, property-based)
-- ✅ Full API documentation
-- ✅ Example code
-
-## Acknowledgments
-
-This crate was designed with inspiration from configuration management libraries in other ecosystems, adapted to Rust's ownership model and type system.
+Any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be licensed under the terms of the Apache-2.0 license, without any additional terms or conditions.
